@@ -10,5 +10,31 @@
 
 
 #15Mar_test
+#18mar
+##22feb22
 
 
+
+import math
+import itertools
+
+#brings in matplotlib and numpy
+#%pylab inline 
+#import matplotlib as plt
+
+#needed to model temps through year from monthly averages
+#from scipy.interpolate import *
+
+#import pandas as pd
+#import numpy as np
+#%cd "/Users/laurenneel/Desktop"
+
+
+#Ta_input = pd.DataFrame(pd.read_csv("Tempe_microclims.csv"))
+#Ta_input.columns = ['', 'dates', 'DOY', 'TIME','Ta_sun','Ta_shade'] #column headers that you want to use, doesn't have to match csv file
+#Ta_input.to_numpy()
+
+#Ta_input[['dates','Ta_sun']] #print only certain columns
+#Ta_input['Ta_sun'].max() # to print max of a column
+#Ta_input.describe()
+#
