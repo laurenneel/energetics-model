@@ -13,6 +13,9 @@
 
 import math
 import itertools
+import pandas as pd
+import numpy as np
+
 
 #brings in matplotlib and numpy
 #%pylab inline 

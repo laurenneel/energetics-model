@@ -1,3 +1,10 @@
+
+
+import math
+import itertools
+
+
+
 #######   SET CONSTANTS   #######################################################
 
 
@@ -9,6 +16,8 @@
 
 #for beta probability distribution
 a, b = 1.0,4.0
+
+
 
 #for von Mises prob dist
 k, mu = 1.0,0.0
