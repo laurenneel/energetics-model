@@ -2,8 +2,9 @@
 
 import math
 import itertools
-#import pandas as pd
-#import numpy as np
+import pandas as pd
+import numpy as np
+
 
 
 
@@ -41,7 +42,8 @@ julian_days= range(365)
 eg=0.75
 
 
-time_list=arange(0,24,0.1)
+time_list=np.arange(0,24,0.1)
+
 julian=4
 #latitude=33.4484
 #longitude=-112.0740
