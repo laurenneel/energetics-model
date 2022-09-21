@@ -4,7 +4,8 @@ import math
 import itertools
 import pandas as pd
 import numpy as np
-
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 
 
@@ -12,8 +13,10 @@ import numpy as np
 #######   SET CONSTANTS   #######################################################
 
 
-
-
+#%%
+x = np.linspace(0, 20, 100)
+plt.plot(x, np.sin(x))
+plt.show()
 
 
 
@@ -125,4 +128,4 @@ def max_distance_sampled(mass):
     # k = 0, mu = 1 such that animals oriented straight ahead and concentrated their searches in a forward direction between 1p/2 and 2p/2 radians
     
     
-  
+# %%
