@@ -673,7 +673,7 @@ def do_sim():
 			temp=[]
 			for i in range(24):
 				temp.append(self.t_air(i, J))
-			return mean(temp)
+			return np.mean(temp)
 	
 		#def t_ground(self, t, sun):
 		#	return sun*(self.t_ave() + self.ampl * sin((pi / 12.) * (t - 8.))) + (1.- sun) * self.t_air(t)
@@ -726,7 +726,7 @@ def do_sim():
 			return self.t_ground(t, J, sun) + (self.R_abs(t, J, sun, a_s, alpha_s) - self.Q_rad(t, J)) / (29.3 * (self.g_Ha(wind) + self.g_r(t, J, sun)))
 		
 		def mass(self):
-			return ((self.h * 100.) * pi * (0.5 * d * 100.)**2.) / 1000.
+			return ((self.h * 100.) * pi * (0.5 * self.d * 100.)**2.) / 1000.
 
 	
 		def update_tb(self):
