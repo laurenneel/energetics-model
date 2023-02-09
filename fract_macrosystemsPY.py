@@ -73,7 +73,7 @@ def char2int(y):
 		return y
 
 path_txt_input_folder='/Users/laurenneel/Desktop/Grass_RGB_DSM_Oct22/LR2/'
-finput = open(path_txt_input_folder + "LR2_elevation", "r")
+finput = open(path_txt_input_folder + "LR2_elev_1m", "r")
 ELEV = []
 ELEV = read_it()
 HEADER1 = ELEV[:8]          #creates raster header
@@ -82,7 +82,7 @@ ELEV=char2int(ELEV)
 elev = np.array(ELEV, dtype=float)
 del ELEV
 
-finput = open(path_txt_input_folder + "LR2_slope", "r")
+finput = open(path_txt_input_folder + "LR2_slope_1m", "r")
 SLOPE = []
 SLOPE= read_it()
 HEADER2 = SLOPE[:8]          #creates raster header
@@ -91,7 +91,7 @@ SLOPE = char2int(SLOPE)
 slope = np.array(SLOPE, dtype=float)
 del SLOPE
 
-finput = open(path_txt_input_folder + "LR2_VARI", "r")
+finput = open(path_txt_input_folder + "LR2_VARI_1m", "r")
 VEG = []
 VEG= read_it()
 HEADER4 = VEG[:8]          #creates raster header
@@ -100,7 +100,7 @@ VEG = char2int(VEG)
 veget = np.array(VEG, dtype=float)
 del VEG
 
-finput = open(path_txt_input_folder + "LR2_aspect", "r")
+finput = open(path_txt_input_folder + "LR2_aspect_1m", "r")
 ASPECT = []
 ASPECT= read_it()
 HEADER4 = ASPECT[:8]          #creates raster header
@@ -110,10 +110,51 @@ aspect = np.array(ASPECT, dtype=float)
 del ASPECT
 
 
+#### modifying the shape of input drone files
+elev = elev[elev != -9999]
+shape = elev.shape[0]
 
+if shape > (132 * 132):
+  shape = (132, 132)
+  elev = np.reshape(elev[:shape[0]*shape[1]], shape)
+else:
+  elev = np.reshape(elev, (int(np.sqrt(shape)), int(np.sqrt(shape))))
+  
+#### aspect  
+aspect = aspect[aspect != -9999]
+shape = aspect.shape[0]
 
+if shape > (132 * 132):
+  shape = (132, 132)
+  aspect = np.reshape(elev[:shape[0]*shape[1]], shape)
+else:
+  aspect = np.reshape(aspect, (int(np.sqrt(shape)), int(np.sqrt(shape))))
 
+#### slope  
+slope = slope[slope != -9999]
+shape = slope.shape[0]
 
+if shape > (132 * 132):
+  shape = (132, 132)
+  slope = np.reshape(elev[:shape[0]*shape[1]], shape)
+else:
+  slope = np.reshape(slope, (int(np.sqrt(shape)), int(np.sqrt(shape))))
+  
+  
+  #### veget  
+veget = veget[veget != -9999]
+shape = veget.shape[0]
+
+if shape > (132 * 132):
+  shape = (132, 132)
+  veget = np.reshape(elev[:shape[0]*shape[1]], shape)
+else:
+  veget = np.reshape(veget, (int(np.sqrt(shape)), int(np.sqrt(shape))))
+  
+  
+  
+  
+  
 
 
 def do_sim():
@@ -505,7 +546,7 @@ def do_sim():
 			self.TA= 0.
 		
 			self.x_min, self.y_min = 0., 0.
-			self.x_max, self.y_max = 99., 99. #x_max, y_max
+			self.x_max, self.y_max = 133., 176. #x_max = ncols, y_max = nrows #### CHANGED FROM SEARS 99. for each 8feb!
 			self.position = {'x':rand() * self.x_max, 'y': rand() * self.y_max}
 		
 			self.thigh =  35.
@@ -679,6 +720,10 @@ def do_sim():
 		#	return sun*(self.t_ave() + self.ampl * sin((pi / 12.) * (t - 8.))) + (1.- sun) * self.t_air(t)
 	
 		def long_ground(self, t, J, sun): #### UPDATE FOR MICROCLIM INPUT DATA... sun/shade GROUND input
+			#micro = pd.read_csv('/Users/laurenneel/Desktop/Grass_RGB_DSM_Oct22/microclim_input_era5/hourly_df_TC_2021.csv', usecols=["Tg_avg"])
+			#Tg_avg = micro.iloc[t, J, sun]["Tg_avg"]
+			#return self.emmiss_soil * self.SIGMA * (Tg_avg + 273)**4
+			#print(Tg_avg)
 			return self.emmiss_soil * self.SIGMA * (self.t_ground(t, J, sun) + 273)**4
 	
 		def Ap_over_A(self, t,J,a_s, alpha_s):
@@ -962,6 +1007,8 @@ def do_sim():
 	#output.close()
 
 
+
+
 	limit = N
 	data = np.array(elev[:])
 	def horizon_master(azimuth, elevation, x, y):
@@ -1008,7 +1055,8 @@ def do_sim():
 	temp_percents, d_percents, p_percents=[],[],[]
 
 	times = np.arange(6.,20.,1./60.).tolist()
-	pop_size = 20
+	#pop_size = 20
+	pop_size = 1
 	population = [T_e() for i in range(pop_size)] #population is a list, where each element is an instance of the "T_e" class that's assigned to variable "lizard" each iteration
     #ppulation is defined and instantiated with a list of T_e class objects before sim_act function is called
     # sim_act
@@ -1022,7 +1070,7 @@ def do_sim():
 		lizard.zenith(t,J)
 		if lizard.Z > 0.:
 			lizard.te = lizard.t_e(t,J, sun=horizon_master(radians(lizard.azimuth(t, J)), elev[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], x=lizard.position['x'], y=lizard.position['y']), a_s=90.- slope[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], alpha_s=aspect[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], veg=veget[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])])
-			#print lizard.zenith(t,J)
+			print(lizard.zenith(t,J))
 			if lizard.tb < lizard.te < lizard.tlow:
 				lizard.moved = 0.
 				lizard.active = 0.
@@ -1051,19 +1099,20 @@ def do_sim():
 					#lizard.tot_dist_moved += lizard.moved
 					#lizard.ate += binomial(1, 0.05)
 					#lizard.total_activity += 1.
+			print(str(lizard.position['x']), str(lizard.position['y']))
 			output.write(str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
             #output.write(str(e_range) + "\t" + str(e_fract) + "\t" + str(v_range) + "\t" + str(v_fract) +"\t" + str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
 	for t in times:
-		print(J, t, str(lizard.position['x']), str(lizard.position['y']),lizard.zenith(t, J=150.))
+		print(J, t)
 		[sim_act(lizard,t,J) for lizard in population]
 
-	tot_act, tot_smr, tot_move, tot_ave_ate =0.,0.,0., 0.
-	for lizard in population:
-		tot_act += float(lizard.total_activity)
-		tot_smr += lizard.energy_balance
-		tot_move += lizard.tot_dist_moved
-		tot_ave_ate += float(lizard.ate)
-	output2.write(str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
+#	tot_act, tot_smr, tot_move, tot_ave_ate =0.,0.,0., 0.
+#	for lizard in population:
+#		tot_act += float(lizard.total_activity)
+#		tot_smr += lizard.energy_balance
+#		tot_move += lizard.tot_dist_moved
+#		tot_ave_ate += float(lizard.ate)
+#	output2.write(str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
 			
 st1= time()
 name_of_sim="details"#raw_input("name of file? ")
