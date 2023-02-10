@@ -153,6 +153,9 @@ else:
   
   
   
+#### BRING in MICROCLIMATE DATA
+micro_df = pd.read_csv("/Users/laurenneel/Desktop/Grass_RGB_DSM_Oct22/microclim_input_era5/hourly_df_LR_2021")
+
   
   
 
@@ -679,34 +682,12 @@ def do_sim():
 				self.TA = maxT(J) * self.gamma_t(self.t_adj(t, J)) + minT(J + 1) * (1 - self.gamma_t(self.t_adj(t, J)))
 				return self.TA
 
-		def t_ground(self, t, J, sun = 1.):
-			if 15 > J >= 0: # for days between jan 1 and jan 15
-				return sun * ((J - 0.)/(14. - -17.) * (janSpline(t)[0] - decSpline(t)[0]) + decSpline(t)[0]) + (1.-sun)*self.t_air(t,J)
-			if 46 > J >= 15: # for days between jan 15 and feb 15
-				return sun *((J - 15.)/(45. - 15.) * (febSpline(t)[0] - janSpline(t)[0]) + janSpline(t)[0])+ (1.-sun)*self.t_air(t,J)
-			if 75 > J >= 46:
-				return sun *((J - 46.)/(74. - 46.) * (marSpline(t)[0] - febSpline(t)[0]) + febSpline(t)[0]) + (1.-sun)*self.t_air(t,J)
-			if 106 > J >= 75:
-				return sun *((J - 75.)/(105. - 75.) * (aprSpline(t) - marSpline(t)) + marSpline(t)) + (1.-sun)*self.t_air(t,J)
-			if 136 > J >= 106:
-				return sun *((J - 106.)/(135. - 106.) * (maySpline(t) - aprSpline(t)) + aprSpline(t)) + (1.-sun)*self.t_air(t,J)
-			if 167 > J >= 136:
-				return sun *((J - 136.)/(166. - 136.) * (junSpline(t) - maySpline(t)) + maySpline(t)) + (1.-sun)*self.t_air(t,J)
-			if 197 > J >= 167:
-				return sun *((J - 167.)/(196. - 167.) * (julSpline(t) - junSpline(t)) + junSpline(t)) + (1.-sun)*self.t_air(t,J)
-			if 228 > J >= 197:
-				return sun *((J - 197.)/(227. - 197.) * (augSpline(t) - julSpline(t)) + julSpline(t)) + (1.-sun)*self.t_air(t,J)
-			if 259 > J >= 228:
-				return sun *((J - 228.)/(258. - 228.) * (sepSpline(t)[0] - augSpline(t)[0]) + augSpline(t)[0]) + (1.-sun)*self.t_air(t,J)
-			if 289 > J >= 259:
-				return sun *((J - 259.)/(288. - 259.) * (octSpline(t)[0] - sepSpline(t)[0]) + sepSpline(t)[0]) + (1.-sun)*self.t_air(t,J)
-			if 320 > J >= 289:
-				return sun *((J - 289.)/(319. - 289.) * (novSpline(t)[0] - octSpline(t)[0]) + octSpline(t)[0]) + (1.-sun)*self.t_air(t,J)
-			if 350 > J >= 320:
-				return sun *((J - 320.)/(349. - 320.) * (decSpline(t)[0] - novSpline(t)[0]) + novSpline(t)[0])+ (1.-sun)*self.t_air(t,J)
-			if 367 > J >= 350:
-				return sun *((J - 350.)/(380. - 350.) * (janSpline(t)[0] - decSpline(t)[0]) + decSpline(t)[0]) + (1.-sun)*self.t_air(t,J)
-
+		def t_ground(self, sun):
+			if sun == 0: # in shade
+				return micro_df.Tg_shade
+			if sun == 1: # in sun
+				return micro_df.Tg_sun
+        
 		def long_atmos(self, t, J): #### UPDATE FOR MICROCLIM INPUT DATA...SUN Ta at 2m input!!
 			return 53.1e-14 * (self.t_air(t, J) + 273.)**6
 	
