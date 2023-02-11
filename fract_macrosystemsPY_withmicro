@@ -157,15 +157,20 @@ else:
 micro_df = pd.read_csv("/Users/laurenneel/Desktop/Grass_RGB_DSM_Oct22/microclim_input_era5/hourly_df_LR_2021.csv")
 micro_df['datetime']= pd.to_datetime(micro_df['datetime'])
 
+#micro_df_minute_res = micro_df.set_index('datetime')
+#micro_df_minute_res = micro_df_minute_res.asfreq('T')
+#micro_df_minute_res = micro_df_minute_res.interpolate(method='time')
+#micro_df_minute_res['new_hour'] = micro_df_minute_res.index.hour
+#micro_df_minute_res['ordinal_day'] = micro_df_minute_res.index.dayofyear
 
-# works for linear interpolation... but can't do spline this way
-micro_df_minute_res=[]
-for group in micro_df:
-    group = group.set_index('datetime')
-    group = group.asfreq('T')
-    group.interpolate(method='time', inplace=True)
-    micro_df_minute_res.append(group)  
-  
+
+micro_df_minute_res = micro_df.set_index('datetime')
+micro_df_minute_res = micro_df_minute_res.asfreq('T')
+micro_df_minute_res = micro_df_minute_res.interpolate(method='time')
+micro_df_minute_res['new_hour'] = micro_df_minute_res.index.hour
+micro_df_minute_res['day_of_year'] = micro_df_minute_res.index.dayofyear                           
+
+print("fuck you")
 
 
 def do_sim():
@@ -173,7 +178,6 @@ def do_sim():
 	SIGMA = 5.673 * 10**(-8) # Stephan-Boltmann constant
 	SOLAR = 1360. # Solar constant
 	#filename = raw_input("site? ")
-	
 	#t =  input("time of day? ")
 
 	climate_change = 0 #input("Climate change scenario? 0 = no, 1= yes: ")
@@ -576,376 +580,376 @@ def do_sim():
 			a, b = c * sin(self.orientation + incre), c * cos(self.orientation + incre)
 			return a, b, c, incre
 		
-		def move_reg(self, t, J, elev, slope, aspect, veget):
-			incre, x1, y1 = 0., self.position['x'], self.position['y'] #, 0.
-			#self.active = 1
-			lenx = len(elev[0])
-			leny = len(elev)
-			az=radians(self.azimuth(t, J))
-			al=radians(self.altitude(t, J))
-			#self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(self.position['y'])][int(self.position['x'])], x=self.position['x'], y=self.position['y']), a_s=90.- slope[int(self.position['y'])][int(self.position['x'])], alpha_s=aspect[int(self.position['y'])][int(self.position['x'])], veg=veg) # at the moment this is just a holder from ast code
-			diff_tb = 50.
-			temp_c = 32.
-			while elev[int(y1)][int(x1)] == -9999 or slope[int(y1)][int(x1)] == -9999 or aspect[int(y1)][int(x1)] == -9999 or veget[int(y1)][int(x1)] == -9999:
-				a, b, c, incre = self.getDisp()
-				if self.thigh >= self.tb >= self.tlow:
-					if binomial(1, self.p1): # remain still
-						#self.active = 0 # x, y = x, y ... 
-						self.moved = 0.
-					else: # move
-						for l in range(self.decisions): # needs to be one per second 
-							a, b, c, incre = self.getDisp()
-							if (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
-								while (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
-									a, b, c, incre = self.getDisp()
-							x1 = self.position['x'] + a
-							y1 = self.position['y'] + b
-							az=radians(self.azimuth(t, J))
-							al=radians(self.altitude(t, J))
-							self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)])
-							up_tb =  self.update_tb()
-							diff_tb_new = abs(self.t_target - up_tb)
-							if diff_tb_new <= diff_tb: # and c <= temp_c:
-								diff_tb = diff_tb_new
-								temp_c = c
-								temp_x1, temp_y1 = x1, y1
-							else:
-								pass	
-							if l == (self.decisions -1):
-								self.position['x'], self.position['y'], c = temp_x1, temp_y1, temp_c
-								self.dist += temp_c
-								self.orientation += incre
-								self.moved = c
-							
-				elif self.tb > self.thigh:
-					if self.tb > self.thigh > self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)]):
-						if binomial(1, self.p2):
-							self.active = 0 #remain still
-							self.moved = 0.
-						else: # move
-							for l in range(self.decisions): # needs to be one per second 
-								a, b, c, incre = self.getDisp()
-								if (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
-									while (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
-										a, b, c, incre = self.getDisp()
-								x1 = self.position['x'] + a
-								y1 = self.position['y'] + b
-								az=radians(self.azimuth(t, J))
-								al=radians(self.altitude(t, J))
-								self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)])
-								up_tb =  self.update_tb()
-								diff_tb_new = abs(self.t_target - up_tb)
-								if diff_tb_new <= diff_tb: # and c <= temp_c:
-									diff_tb = diff_tb_new
-									temp_c = c
-									temp_x1, temp_y1 = x1, y1
-								else:
-									pass			
-								if l == (self.decisions -1):
-									self.position['x'], self.position['y'], c = temp_x1, temp_y1, temp_c
-									self.dist += temp_c
-									self.orientation += incre
-									self.moved = c
-					else: # move
-						for l in range(self.decisions): # needs to be one per second 
-							a, b, c, incre = self.getDisp()
-							if (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
-								while (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
-									a, b, c, incre = self.getDisp()
-							x1 = self.position['x'] + a
-							y1 = self.position['y'] + b
-							az=radians(self.azimuth(t, J))
-							al=radians(self.altitude(t, J))
-							self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)], Tg_shade,Tg_sun,Ta_2m, Ta_shade, Ta_sun)
-							up_tb =  self.update_tb()
-							diff_tb_new = abs(self.t_target - up_tb)
-							if diff_tb_new <= diff_tb:# and c <= temp_c:
-								diff_tb = diff_tb_new
-								temp_c = c
-								temp_x1, temp_y1 = x1, y1
-							else:
-								pass	
-							if l == (self.decisions -1):
-								self.position['x'], self.position['y'], c = temp_x1, temp_y1, temp_c
-								self.dist += temp_c
-								self.orientation += incre
-								self.moved = c
-	
-				else: #self.tb < self.tlow:
-					if self.tb < self.tlow < self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[y1][x1], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)]):
-						if binomial(1, self.p3):
-							self.active = 0 #remain still
-							self.moved = 0.
-						else: # move
-							for l in range(self.decisions): # needs to be one per second 
-								a, b, c, incre = self.getDisp()
-								if (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
-									while (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
-										a, b, c, incre = self.getDisp()
-								x1 = self.position['x'] + a
-								y1 = self.position['y'] + b
-								az=radians(self.azimuth(t, J))
-								al=radians(self.altitude(t, J))
-								self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)])
-								up_tb =  self.update_tb()	
-								diff_tb_new = abs(self.t_target - up_tb)
-								if diff_tb_new <= diff_tb: # and c <= temp_c:
-									diff_tb = diff_tb_new
-									temp_c = c
-									temp_x1, temp_y1 = x1, y1
-								else:
-									pass	
-								if l == (self.decisions - 1):
-									self.position['x'], self.position['y'], c = temp_x1, temp_y1, temp_c
-									self.dist += temp_c
-									self.orientation += incre
-									self.moved = c
-					else:
-						for l in range(self.decisions): # needs to be one per second 
-							a, b, c, incre = self.getDisp()
-							if (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
-								while (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
-									a, b, c, incre = self.getDisp()
-							x1 = self.position['x'] + a
-							y1 = self.position['y'] + b
-							az=radians(self.azimuth(t, J))
-							al=radians(self.altitude(t, J))
-							self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)])
-							up_tb =  self.update_tb()
-							diff_tb_new = abs(self.t_target - up_tb)
-							if diff_tb_new <= diff_tb: # and c <= temp_c:
-								diff_tb = diff_tb_new
-								temp_c = c
-								temp_x1, temp_y1 = x1, y1
-							else:
-								pass			
-							if l == (self.decisions - 1):
-								self.position['x'], self.position['y'], c = temp_x1, temp_y1, temp_c
-								self.dist += temp_c
-								self.orientation += incre
-								self.moved = c	
-
-
-    ### MAKE MAPS
-	#elev, slope, aspect, veget, e_range, e_fract, v_range, v_fract = make_maps(h,  high,  N,  MU,  SD)  ###only need these first 4 variables -- assign 
-
-
-	
-	# Save Maps
-	#write_file = "maps/elev" +  "_" + '{:.4}'.format(e_fract) + "_" + '{:.3}'.format(e_range)+ "_" + '{:.3}'.format(v_fract+3.) + "_" + '{:.3}'.format(v_range)+ ".asc"
-	#output=open(write_file, 'w')
-	#for i in range(N):
-	#	for j in range(N):
-	#		output.write(str(elev[i][j])), output.write(' ')
-	#	output.write("\n")
-	#output.close()
-	#
-	#write_file = "maps/slope" +  "_" +'{:.4}'.format(e_fract) + "_" + '{:.3}'.format(e_range)+ "_" + '{:.3}'.format(v_fract+3.) + "_" + '{:.3}'.format(v_range)+ ".asc"
-	#output=open(write_file, 'w')
-	#for i in range(N):
-	#	for j in range(N):
-	#		output.write(str(slope[i][j])), output.write(' ')
-	#	output.write("\n")
-	#output.close()
-	#
-	#write_file = "maps/aspect" + "_" + '{:.4}'.format(e_fract) + "_" + '{:.3}'.format(e_range)+ "_" + '{:.3}'.format(v_fract+3.) + "_" + '{:.3}'.format(v_range)+ ".asc"
-	#output=open(write_file, 'w')
-	#for i in range(N):
-	#	for j in range(N):
-	#		output.write(str(aspect[i][j])), output.write(' ')
-	#	output.write("\n")
-	#output.close()
-	#
-	#write_file = "maps/veg" + "_" + '{:.4}'.format(e_fract) + "_" + '{:.3}'.format(e_range)+ "_" + '{:.3}'.format(v_fract+3.) + "_" + '{:.3}'.format(v_range)+ ".asc"
-	#output=open(write_file, 'w')
-	#for i in range(N):
-	#	for j in range(N):
-	#		if veget[i][j]:
-	#			output.write(str(1)), output.write(' ')
-	#		else:
-	#			output.write(str(0)), output.write(' ')				
-	#	output.write("\n")
-	#output.close()
-
-
-
-
-	limit = N
-	data = np.array(elev[:])
-	def horizon_master(azimuth, elevation, x, y):
-		if find_horizon(azimuth,x,y) > elevation:
-			#print True
-			return 0 #True is shaded, so we want '0' for full sun
-		else:
-			#print False
-			return 1
-
-	cellsize = 1.	
-	def find_horizon(azimuth, x, y):
-		x, y=math.floor(x), math.floor(y)
-		z_data = [data[y][x]]
-		hyp = 0.25# float(elev_header[4][1])/2. # 0.25#0.25# 0.25 
-		while 0 < x+ hyp*sin(azimuth) < len(data[0]) and 0 < y + hyp*cos(azimuth) < len(data):
-			#print x+ hyp*sin(azimuth), y + hyp*cos(azimuth)
-			x = x + hyp*sin(azimuth)*cellsize #added int # check whether this should be mulitplied by cell size
-			y = y + hyp*cos(azimuth)*cellsize
-			if data[math.floor(y)][math.floor(x)] not in z_data:
-				z_data.append(data[math.floor(y)][math.floor(x)])
-		h_max = -pi/2.
-		for i in range(1, len(z_data)):
-			h_angle = atan((z_data[i]-z_data[0])/(i*cellsize))
-			if h_angle > h_max:
-				h_max = h_angle
-		return h_max
-	
-		
-	# Run activity sims
-	shadows=np.copy(elev[:])
-	temperatures = np.copy(elev[:])
-	activity_temps = np.copy(elev[:])
-	critical_temps = np.copy(elev[:])
-	d_temps = np.copy(elev[:])
-	performance = np.copy(elev[:])
-	act_sum=[]
-	crit_sum=[]
-	temp_temp = []
-	d_temp = []
-	act_temp =[]
-	crit_temp = []
-	p_temp = []
-	temp_percents, d_percents, p_percents=[],[],[]
-
-	times = np.arange(6.,20.,1./60.).tolist()
-	#pop_size = 20
-	pop_size = 1
-	population = [T_e() for i in range(pop_size)] #population is a list, where each element is an instance of the "T_e" class that's assigned to variable "lizard" each iteration
-    #ppulation is defined and instantiated with a list of T_e class objects before sim_act function is called
-    # sim_act
-
-	output = open(name_of_sim+".csv", 'a')
-	output2 = open(name_of_sim2+".csv", 'a')
-
-
-	
-	def sim_act(lizard):
-		lizard.zenith(t,J)
-		if lizard.Z > 0.:
-			lizard.te = lizard.t_e(t,J, sun=horizon_master(radians(lizard.azimuth(t, J)), elev[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], x=lizard.position['x'], y=lizard.position['y']), a_s=90.- slope[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], alpha_s=aspect[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], veg=veget[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], Tg_shade, Tg_sun)
-			print(lizard.zenith(t,J))
-			if lizard.tb < lizard.te < lizard.tlow:
-				lizard.moved = 0.
-				lizard.active = 0.
-				lizard.tb = lizard.update_tb()
-				lizard.energy_balance += lizard.smr()
-				#lizard.tot_dist_moved += lizard.moved
-			elif lizard.tlow <= lizard.tb <=lizard.ctmax:
-				lizard.move_reg(t,J,elev, slope, aspect, veget)
-				lizard.tb = lizard.update_tb()
-				lizard.energy_balance += lizard.smr()
-				lizard.tot_dist_moved += lizard.moved
-				lizard.ate += binomial(1, 0.05)
-				lizard.total_activity += 1.
-				lizard.active = 1.
-			else:
-				if lizard.te > lizard.ctmax:
-					lizard.moved = 0.
-					lizard.active = 0.
-					lizard.energy_balance += lizard.smr()
-					#lizard.tot_dist_moved += lizard.moved
-				else: 
-					lizard.active = 0.
-					lizard.tb = lizard.update_tb()
-					lizard.energy_balance += lizard.smr()
-					#lizard.tot_dist_moved += lizard.moved
-					#lizard.ate += binomial(1, 0.05)
-					#lizard.total_activity += 1.
-			print(str(lizard.position['x']), str(lizard.position['y']))
-			output.write(str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
-            #output.write(str(e_range) + "\t" + str(e_fract) + "\t" + str(v_range) + "\t" + str(v_fract) +"\t" + str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
-            
-            
-#	for index, row in micro_df.iterrows():
-#		if (index ==2): ## just to test code without fully running
-#			break ## just to test code without fully running
-#		J = row['doy']
-#		t = row['hour']
-#		Ta_sun = row['Ta_sun']
-#		Ta_shade = row['Ta_shade']
-#		Tg_sun = row['Tg_sun']
-#		Tg_shade = row['Tg_shade']
-#		Ta_2m = row['Ta_2m']
-#		print(J,t)
-#		[sim_act(lizard, t, J) for lizard in population]
-#  
-
-	for t in times:
-		#print(J, t)
-		[sim_act(lizard) for lizard in population]
- 	
-#  for t in times:
-#		print(J, t)
-#		[sim_act(lizard,t,J) for lizard in population]
-
-#	tot_act, tot_smr, tot_move, tot_ave_ate =0.,0.,0., 0.
-#	for lizard in population:
-#		tot_act += float(lizard.total_activity)
-#		tot_smr += lizard.energy_balance
-#		tot_move += lizard.tot_dist_moved
-#		tot_ave_ate += float(lizard.ate)
-#	output2.write(str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
-			
-st1= time()
-name_of_sim="details"#raw_input("name of file? ")
-output = open(name_of_sim+".csv", 'w')
-name_of_sim2="summary"#raw_input("name of file? ")
-output2 = open(name_of_sim2+".csv", 'w')
-#output2.write("elev\tefract\tveg\tvfract\tactive\tsmr\tmoved\tate\n") #MS original
-output2.write("elev\tactive\tsmr\tmoved\tate\n")
-output2.close()
-#output.write("elev\tefract\tveg\tvfract\ttime\tX\tY\tte\ttb\tactive\tmei\tsmr\tnet\tmoved\tate\n") #MS original
-output.write("elev\ttime\tX\tY\tte\ttb\tactive\tmei\tsmr\tnet\tmoved\tate\n")
-output.close()
-
-	#for t in times:
-    #    print(J, t)
-    #    for lizard in population:
-    #        print("lizard x position:", lizard.position['x'])
-    #        print("lizard y position:", lizard.position['y'])
-    #        print("elev array size:", len(elev))
-    #        print("slope array size:", len(slope))
-    #        print("aspect array size:", len(aspect))
-    #        print("veget array size:", len(veget))
-    #        sim_act(lizard,t,J)
-    
-
-"""
-jobs = []
-for x in range(1000):
-	p=multiprocessing.Process(target=do_sim, args=())
-	jobs.append(p)
-	p.start()
-for x in range(10):
-	jobs[x].join()
-"""
-
-
-
-
-"""
-from multiprocessing import Pool
-pool = Pool(8)
-for _ in range(256): #was 1000 == number of maps , or the simulation number
-	pool.apply_async(do_sim, ())
-pool.close()
-
-pool.join()
-
-st2 = time()
-print(st2-st1)
-
-"""
-
-
-do_sim() #to run it one 
-output.close()
-output2.close()
+#		def move_reg(self, t, J, elev, slope, aspect, veget):
+#			incre, x1, y1 = 0., self.position['x'], self.position['y'] #, 0.
+#			#self.active = 1
+#			lenx = len(elev[0])
+#			leny = len(elev)
+#			az=radians(self.azimuth(t, J))
+#			al=radians(self.altitude(t, J))
+#			#self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(self.position['y'])][int(self.position['x'])], x=self.position['x'], y=self.position['y']), a_s=90.- slope[int(self.position['y'])][int(self.position['x'])], alpha_s=aspect[int(self.position['y'])][int(self.position['x'])], veg=veg) # at the moment this is just a holder from ast code
+#			diff_tb = 50.
+#			temp_c = 32.
+#			while elev[int(y1)][int(x1)] == -9999 or slope[int(y1)][int(x1)] == -9999 or aspect[int(y1)][int(x1)] == -9999 or veget[int(y1)][int(x1)] == -9999:
+#				a, b, c, incre = self.getDisp()
+#				if self.thigh >= self.tb >= self.tlow:
+#					if binomial(1, self.p1): # remain still
+#						#self.active = 0 # x, y = x, y ... 
+#						self.moved = 0.
+#					else: # move
+#						for l in range(self.decisions): # needs to be one per second 
+#							a, b, c, incre = self.getDisp()
+#							if (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
+#								while (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
+#									a, b, c, incre = self.getDisp()
+#							x1 = self.position['x'] + a
+#							y1 = self.position['y'] + b
+#							az=radians(self.azimuth(t, J))
+#							al=radians(self.altitude(t, J))
+#							self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)])
+#							up_tb =  self.update_tb()
+#							diff_tb_new = abs(self.t_target - up_tb)
+#							if diff_tb_new <= diff_tb: # and c <= temp_c:
+#								diff_tb = diff_tb_new
+#								temp_c = c
+#								temp_x1, temp_y1 = x1, y1
+#							else:
+#								pass	
+#							if l == (self.decisions -1):
+#								self.position['x'], self.position['y'], c = temp_x1, temp_y1, temp_c
+#								self.dist += temp_c
+#								self.orientation += incre
+#								self.moved = c
+#							
+#				elif self.tb > self.thigh:
+#					if self.tb > self.thigh > self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)]):
+#						if binomial(1, self.p2):
+#							self.active = 0 #remain still
+#							self.moved = 0.
+#						else: # move
+#							for l in range(self.decisions): # needs to be one per second 
+#								a, b, c, incre = self.getDisp()
+#								if (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
+#									while (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
+#										a, b, c, incre = self.getDisp()
+#								x1 = self.position['x'] + a
+#								y1 = self.position['y'] + b
+#								az=radians(self.azimuth(t, J))
+#								al=radians(self.altitude(t, J))
+#								self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)])
+#								up_tb =  self.update_tb()
+#								diff_tb_new = abs(self.t_target - up_tb)
+#								if diff_tb_new <= diff_tb: # and c <= temp_c:
+#									diff_tb = diff_tb_new
+#									temp_c = c
+#									temp_x1, temp_y1 = x1, y1
+#								else:
+#									pass			
+#								if l == (self.decisions -1):
+#									self.position['x'], self.position['y'], c = temp_x1, temp_y1, temp_c
+#									self.dist += temp_c
+#									self.orientation += incre
+#									self.moved = c
+#					else: # move
+#						for l in range(self.decisions): # needs to be one per second 
+#							a, b, c, incre = self.getDisp()
+#							if (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
+#								while (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
+#									a, b, c, incre = self.getDisp()
+#							x1 = self.position['x'] + a
+#							y1 = self.position['y'] + b
+#							az=radians(self.azimuth(t, J))
+#							al=radians(self.altitude(t, J))
+#							self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)], Tg_shade,Tg_sun,Ta_2m, Ta_shade, Ta_sun)
+#							up_tb =  self.update_tb()
+#							diff_tb_new = abs(self.t_target - up_tb)
+#							if diff_tb_new <= diff_tb:# and c <= temp_c:
+#								diff_tb = diff_tb_new
+#								temp_c = c
+#								temp_x1, temp_y1 = x1, y1
+#							else:
+#								pass	
+#							if l == (self.decisions -1):
+#								self.position['x'], self.position['y'], c = temp_x1, temp_y1, temp_c
+#								self.dist += temp_c
+#								self.orientation += incre
+#								self.moved = c
+#	
+#				else: #self.tb < self.tlow:
+#					if self.tb < self.tlow < self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[y1][x1], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)]):
+#						if binomial(1, self.p3):
+#							self.active = 0 #remain still
+#							self.moved = 0.
+#						else: # move
+#							for l in range(self.decisions): # needs to be one per second 
+#								a, b, c, incre = self.getDisp()
+#								if (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
+#									while (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
+#										a, b, c, incre = self.getDisp()
+#								x1 = self.position['x'] + a
+#								y1 = self.position['y'] + b
+#								az=radians(self.azimuth(t, J))
+#								al=radians(self.altitude(t, J))
+#								self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)])
+#								up_tb =  self.update_tb()	
+#								diff_tb_new = abs(self.t_target - up_tb)
+#								if diff_tb_new <= diff_tb: # and c <= temp_c:
+#									diff_tb = diff_tb_new
+#									temp_c = c
+#									temp_x1, temp_y1 = x1, y1
+#								else:
+#									pass	
+#								if l == (self.decisions - 1):
+#									self.position['x'], self.position['y'], c = temp_x1, temp_y1, temp_c
+#									self.dist += temp_c
+#									self.orientation += incre
+#									self.moved = c
+#					else:
+#						for l in range(self.decisions): # needs to be one per second 
+#							a, b, c, incre = self.getDisp()
+#							if (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
+#								while (not (0.<=self.position['x']+a<=lenx-1)) or  (not (0.<=self.position['y']+b<=leny-1)):
+#									a, b, c, incre = self.getDisp()
+#							x1 = self.position['x'] + a
+#							y1 = self.position['y'] + b
+#							az=radians(self.azimuth(t, J))
+#							al=radians(self.altitude(t, J))
+#							self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)])
+#							up_tb =  self.update_tb()
+#							diff_tb_new = abs(self.t_target - up_tb)
+#							if diff_tb_new <= diff_tb: # and c <= temp_c:
+#								diff_tb = diff_tb_new
+#								temp_c = c
+#								temp_x1, temp_y1 = x1, y1
+#							else:
+#								pass			
+#							if l == (self.decisions - 1):
+#								self.position['x'], self.position['y'], c = temp_x1, temp_y1, temp_c
+#								self.dist += temp_c
+#								self.orientation += incre
+#								self.moved = c	
+#
+#
+#    ### MAKE MAPS
+#	#elev, slope, aspect, veget, e_range, e_fract, v_range, v_fract = make_maps(h,  high,  N,  MU,  SD)  ###only need these first 4 variables -- assign 
+#
+#
+#	
+#	# Save Maps
+#	#write_file = "maps/elev" +  "_" + '{:.4}'.format(e_fract) + "_" + '{:.3}'.format(e_range)+ "_" + '{:.3}'.format(v_fract+3.) + "_" + '{:.3}'.format(v_range)+ ".asc"
+#	#output=open(write_file, 'w')
+#	#for i in range(N):
+#	#	for j in range(N):
+#	#		output.write(str(elev[i][j])), output.write(' ')
+#	#	output.write("\n")
+#	#output.close()
+#	#
+#	#write_file = "maps/slope" +  "_" +'{:.4}'.format(e_fract) + "_" + '{:.3}'.format(e_range)+ "_" + '{:.3}'.format(v_fract+3.) + "_" + '{:.3}'.format(v_range)+ ".asc"
+#	#output=open(write_file, 'w')
+#	#for i in range(N):
+#	#	for j in range(N):
+#	#		output.write(str(slope[i][j])), output.write(' ')
+#	#	output.write("\n")
+#	#output.close()
+#	#
+#	#write_file = "maps/aspect" + "_" + '{:.4}'.format(e_fract) + "_" + '{:.3}'.format(e_range)+ "_" + '{:.3}'.format(v_fract+3.) + "_" + '{:.3}'.format(v_range)+ ".asc"
+#	#output=open(write_file, 'w')
+#	#for i in range(N):
+#	#	for j in range(N):
+#	#		output.write(str(aspect[i][j])), output.write(' ')
+#	#	output.write("\n")
+#	#output.close()
+#	#
+#	#write_file = "maps/veg" + "_" + '{:.4}'.format(e_fract) + "_" + '{:.3}'.format(e_range)+ "_" + '{:.3}'.format(v_fract+3.) + "_" + '{:.3}'.format(v_range)+ ".asc"
+#	#output=open(write_file, 'w')
+#	#for i in range(N):
+#	#	for j in range(N):
+#	#		if veget[i][j]:
+#	#			output.write(str(1)), output.write(' ')
+#	#		else:
+#	#			output.write(str(0)), output.write(' ')				
+#	#	output.write("\n")
+#	#output.close()
+#
+#
+#
+#
+#	limit = N
+#	data = np.array(elev[:])
+#	def horizon_master(azimuth, elevation, x, y):
+#		if find_horizon(azimuth,x,y) > elevation:
+#			#print True
+#			return 0 #True is shaded, so we want '0' for full sun
+#		else:
+#			#print False
+#			return 1
+#
+#	cellsize = 1.	
+#	def find_horizon(azimuth, x, y):
+#		x, y=math.floor(x), math.floor(y)
+#		z_data = [data[y][x]]
+#		hyp = 0.25# float(elev_header[4][1])/2. # 0.25#0.25# 0.25 
+#		while 0 < x+ hyp*sin(azimuth) < len(data[0]) and 0 < y + hyp*cos(azimuth) < len(data):
+#			#print x+ hyp*sin(azimuth), y + hyp*cos(azimuth)
+#			x = x + hyp*sin(azimuth)*cellsize #added int # check whether this should be mulitplied by cell size
+#			y = y + hyp*cos(azimuth)*cellsize
+#			if data[math.floor(y)][math.floor(x)] not in z_data:
+#				z_data.append(data[math.floor(y)][math.floor(x)])
+#		h_max = -pi/2.
+#		for i in range(1, len(z_data)):
+#			h_angle = atan((z_data[i]-z_data[0])/(i*cellsize))
+#			if h_angle > h_max:
+#				h_max = h_angle
+#		return h_max
+#	
+#		
+#	# Run activity sims
+#	shadows=np.copy(elev[:])
+#	temperatures = np.copy(elev[:])
+#	activity_temps = np.copy(elev[:])
+#	critical_temps = np.copy(elev[:])
+#	d_temps = np.copy(elev[:])
+#	performance = np.copy(elev[:])
+#	act_sum=[]
+#	crit_sum=[]
+#	temp_temp = []
+#	d_temp = []
+#	act_temp =[]
+#	crit_temp = []
+#	p_temp = []
+#	temp_percents, d_percents, p_percents=[],[],[]
+#
+#	times = np.arange(6.,20.,1./60.).tolist()
+#	#pop_size = 20
+#	pop_size = 1
+#	population = [T_e() for i in range(pop_size)] #population is a list, where each element is an instance of the "T_e" class that's assigned to variable "lizard" each iteration
+#    #ppulation is defined and instantiated with a list of T_e class objects before sim_act function is called
+#    # sim_act
+#
+#	output = open(name_of_sim+".csv", 'a')
+#	output2 = open(name_of_sim2+".csv", 'a')
+#
+#
+#	
+#	def sim_act(lizard):
+#		lizard.zenith(t,J)
+#		if lizard.Z > 0.:
+#			lizard.te = lizard.t_e(t,J, sun=horizon_master(radians(lizard.azimuth(t, J)), elev[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], x=lizard.position['x'], y=lizard.position['y']), a_s=90.- slope[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], alpha_s=aspect[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], veg=veget[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], Tg_shade, Tg_sun)
+#			print(lizard.zenith(t,J))
+#			if lizard.tb < lizard.te < lizard.tlow:
+#				lizard.moved = 0.
+#				lizard.active = 0.
+#				lizard.tb = lizard.update_tb()
+#				lizard.energy_balance += lizard.smr()
+#				#lizard.tot_dist_moved += lizard.moved
+#			elif lizard.tlow <= lizard.tb <=lizard.ctmax:
+#				lizard.move_reg(t,J,elev, slope, aspect, veget)
+#				lizard.tb = lizard.update_tb()
+#				lizard.energy_balance += lizard.smr()
+#				lizard.tot_dist_moved += lizard.moved
+#				lizard.ate += binomial(1, 0.05)
+#				lizard.total_activity += 1.
+#				lizard.active = 1.
+#			else:
+#				if lizard.te > lizard.ctmax:
+#					lizard.moved = 0.
+#					lizard.active = 0.
+#					lizard.energy_balance += lizard.smr()
+#					#lizard.tot_dist_moved += lizard.moved
+#				else: 
+#					lizard.active = 0.
+#					lizard.tb = lizard.update_tb()
+#					lizard.energy_balance += lizard.smr()
+#					#lizard.tot_dist_moved += lizard.moved
+#					#lizard.ate += binomial(1, 0.05)
+#					#lizard.total_activity += 1.
+#			print(str(lizard.position['x']), str(lizard.position['y']))
+#			output.write(str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
+#            #output.write(str(e_range) + "\t" + str(e_fract) + "\t" + str(v_range) + "\t" + str(v_fract) +"\t" + str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
+#            
+#            
+##	for index, row in micro_df.iterrows():
+##		if (index ==2): ## just to test code without fully running
+##			break ## just to test code without fully running
+##		J = row['doy']
+##		t = row['hour']
+##		Ta_sun = row['Ta_sun']
+##		Ta_shade = row['Ta_shade']
+##		Tg_sun = row['Tg_sun']
+##		Tg_shade = row['Tg_shade']
+##		Ta_2m = row['Ta_2m']
+##		print(J,t)
+##		[sim_act(lizard, t, J) for lizard in population]
+##  
+#
+#	for t in times:
+#		#print(J, t)
+#		[sim_act(lizard) for lizard in population]
+# 	
+##  for t in times:
+##		print(J, t)
+##		[sim_act(lizard,t,J) for lizard in population]
+#
+##	tot_act, tot_smr, tot_move, tot_ave_ate =0.,0.,0., 0.
+##	for lizard in population:
+##		tot_act += float(lizard.total_activity)
+##		tot_smr += lizard.energy_balance
+##		tot_move += lizard.tot_dist_moved
+##		tot_ave_ate += float(lizard.ate)
+##	output2.write(str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
+#			
+#st1= time()
+#name_of_sim="details"#raw_input("name of file? ")
+#output = open(name_of_sim+".csv", 'w')
+#name_of_sim2="summary"#raw_input("name of file? ")
+#output2 = open(name_of_sim2+".csv", 'w')
+##output2.write("elev\tefract\tveg\tvfract\tactive\tsmr\tmoved\tate\n") #MS original
+#output2.write("elev\tactive\tsmr\tmoved\tate\n")
+#output2.close()
+##output.write("elev\tefract\tveg\tvfract\ttime\tX\tY\tte\ttb\tactive\tmei\tsmr\tnet\tmoved\tate\n") #MS original
+#output.write("elev\ttime\tX\tY\tte\ttb\tactive\tmei\tsmr\tnet\tmoved\tate\n")
+#output.close()
+#
+#	#for t in times:
+#    #    print(J, t)
+#    #    for lizard in population:
+#    #        print("lizard x position:", lizard.position['x'])
+#    #        print("lizard y position:", lizard.position['y'])
+#    #        print("elev array size:", len(elev))
+#    #        print("slope array size:", len(slope))
+#    #        print("aspect array size:", len(aspect))
+#    #        print("veget array size:", len(veget))
+#    #        sim_act(lizard,t,J)
+#    
+#
+#"""
+#jobs = []
+#for x in range(1000):
+#	p=multiprocessing.Process(target=do_sim, args=())
+#	jobs.append(p)
+#	p.start()
+#for x in range(10):
+#	jobs[x].join()
+#"""
+#
+#
+#
+#
+#"""
+#from multiprocessing import Pool
+#pool = Pool(8)
+#for _ in range(256): #was 1000 == number of maps , or the simulation number
+#	pool.apply_async(do_sim, ())
+#pool.close()
+#
+#pool.join()
+#
+#st2 = time()
+#print(st2-st1)
+#
+#"""
+#
+#
+#do_sim() #to run it one 
+#output.close()
+#output2.close()
