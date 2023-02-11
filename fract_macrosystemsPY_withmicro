@@ -29,7 +29,7 @@ high = 1
 N = 100 #input("spatial extent? ") #128
 MU= 0.
 SD = 1.
-J =  150 #input("day? ")
+#J =  150 #input("day? ")
 from time import time
 
 ## read in elev, slope, aspect, veget files
@@ -154,9 +154,17 @@ else:
   
   
 #### BRING in MICROCLIMATE DATA
-micro_df = pd.read_csv("/Users/laurenneel/Desktop/Grass_RGB_DSM_Oct22/microclim_input_era5/hourly_df_LR_2021")
+micro_df = pd.read_csv("/Users/laurenneel/Desktop/Grass_RGB_DSM_Oct22/microclim_input_era5/hourly_df_LR_2021.csv")
+micro_df['datetime']= pd.to_datetime(micro_df['datetime'])
 
-  
+
+# works for linear interpolation... but can't do spline this way
+micro_df_minute_res=[]
+for group in micro_df:
+    group = group.set_index('datetime')
+    group = group.asfreq('T')
+    group.interpolate(method='time', inplace=True)
+    micro_df_minute_res.append(group)  
   
 
 
@@ -284,237 +292,6 @@ def do_sim():
 	#
 	#	g	h	i
 
-	def calc_slope(elev_map, x, y, N):
-		if (0<x<N-1) and (0 < y < N-1):
-			a = elev_map[y-1][x-1]
-			b = elev_map[y-1][x]
-			c = elev_map[y-1][x+1]
-			d = elev_map[y][x-1]
-			e = elev_map[y][x]
-			f = elev_map[y][x+1]
-			g = elev_map[y+1][x-1]
-			h = elev_map[y+1][x]
-			i = elev_map[y+1][x+1]
-		if (x == 0) and (0 < y < N-1):
-			a = elev_map[y-1][N-1]
-			b = elev_map[y-1][x]
-			c = elev_map[y-1][x+1]
-			d = elev_map[y][N-1]
-			e = elev_map[y][x]
-			f = elev_map[y][x+1]
-			g = elev_map[y+1][N-1]
-			h = elev_map[y+1][x]
-			i = elev_map[y+1][x+1]
-		if (x == 0) and (y ==  N-1):
-			a = elev_map[y-1][N-1]
-			b = elev_map[y-1][x]
-			c = elev_map[y-1][x+1]
-			d = elev_map[y][N-1]
-			e = elev_map[y][x]
-			f = elev_map[y][x+1]
-			g = elev_map[0][N-1]
-			h = elev_map[0][x]
-			i = elev_map[0][x+1]
-		if (x == 0) and (y == 0):
-			a = elev_map[N-1][N-1]
-			b = elev_map[N-1][x]
-			c = elev_map[N-1][x+1]
-			d = elev_map[y][N-1]
-			e = elev_map[y][x]
-			f = elev_map[y][x+1]
-			g = elev_map[y+1][N-1]
-			h = elev_map[y+1][x]
-			i = elev_map[y+1][x+1]
-		if (x == N-1) and (0 < y < N-1):
-			a = elev_map[y-1][x-1]
-			b = elev_map[y-1][x]
-			c = elev_map[y-1][0]
-			d = elev_map[y][x-1]
-			e = elev_map[y][x]
-			f = elev_map[y][0]
-			g = elev_map[y+1][x-1]
-			h = elev_map[y+1][x]
-			i = elev_map[y+1][0]
-		if (x == N-1) and (y ==  N-1):
-			a = elev_map[y-1][x-1]
-			b = elev_map[y-1][x]
-			c = elev_map[y-1][0]
-			d = elev_map[y][x-1]
-			e = elev_map[y][x]
-			f = elev_map[y][0]
-			g = elev_map[0][x-1]
-			h = elev_map[0][x]
-			i = elev_map[0][0]
-		if (x == N-1) and (y == 0):
-			a = elev_map[N-1][x-1]
-			b = elev_map[N-1][x]
-			c = elev_map[N-1][0]
-			d = elev_map[y][x-1]
-			e = elev_map[y][x]
-			f = elev_map[y][0]
-			g = elev_map[y+1][x-1]
-			h = elev_map[y+1][x]
-			i = elev_map[y+1][0]
-		if (0 < x < N-1) and (y == 0):
-			a = elev_map[N-1][x-1]
-			b = elev_map[N-1][x]
-			c = elev_map[N-1][x+1]
-			d = elev_map[y][x-1]
-			e = elev_map[y][x]
-			f = elev_map[y][x+1]
-			g = elev_map[y+1][x-1]
-			h = elev_map[y+1][x]
-			i = elev_map[y+1][x+1]
-		if (0 < x < N-1) and (y == N-1):
-			a = elev_map[y-1][x-1]
-			b = elev_map[y-1][x]
-			c = elev_map[y-1][x+1]
-			d = elev_map[y][x-1]
-			e = elev_map[y][x]
-			f = elev_map[y][x+1]
-			g = elev_map[0][x-1]
-			h = elev_map[0][x]
-			i = elev_map[0][x+1]
-		
-		x_cell_size, y_cell_size = 1,1
-		dzdx = ((c + 2*f + i) - (a + 2*d + g)) / (8 * x_cell_size)
-		dzdy = ((g + 2*h + i) - (a + 2*b + c)) / (8 * y_cell_size)
-		rise_run = sqrt(dzdx**2 +dzdy**2)
-		slope_degrees = atan(rise_run) * 57.29578
-		return slope_degrees
-
-	def calc_aspect(elev_map, x, y, N):
-		if (0<x<N-1) and (0 < y < N-1):
-			a = elev_map[y-1][x-1]
-			b = elev_map[y-1][x]
-			c = elev_map[y-1][x+1]
-			d = elev_map[y][x-1]
-			e = elev_map[y][x]
-			f = elev_map[y][x+1]
-			g = elev_map[y+1][x-1]
-			h = elev_map[y+1][x]
-			i = elev_map[y+1][x+1]
-		if (x == 0) and (0 < y < N-1):
-			a = elev_map[y-1][N-1]
-			b = elev_map[y-1][x]
-			c = elev_map[y-1][x+1]
-			d = elev_map[y][N-1]
-			e = elev_map[y][x]
-			f = elev_map[y][x+1]
-			g = elev_map[y+1][N-1]
-			h = elev_map[y+1][x]
-			i = elev_map[y+1][x+1]
-		if (x == 0) and (y ==  N-1):
-			a = elev_map[y-1][N-1]
-			b = elev_map[y-1][x]
-			c = elev_map[y-1][x+1]
-			d = elev_map[y][N-1]
-			e = elev_map[y][x]
-			f = elev_map[y][x+1]
-			g = elev_map[0][N-1]
-			h = elev_map[0][x]
-			i = elev_map[0][x+1]
-		if (x == 0) and (y == 0):
-			a = elev_map[N-1][N-1]
-			b = elev_map[N-1][x]
-			c = elev_map[N-1][x+1]
-			d = elev_map[y][N-1]
-			e = elev_map[y][x]
-			f = elev_map[y][x+1]
-			g = elev_map[y+1][N-1]
-			h = elev_map[y+1][x]
-			i = elev_map[y+1][x+1]
-		if (x == N-1) and (0 < y < N-1):
-			a = elev_map[y-1][x-1]
-			b = elev_map[y-1][x]
-			c = elev_map[y-1][0]
-			d = elev_map[y][x-1]
-			e = elev_map[y][x]
-			f = elev_map[y][0]
-			g = elev_map[y+1][x-1]
-			h = elev_map[y+1][x]
-			i = elev_map[y+1][0]
-		if (x == N-1) and (y ==  N-1):
-			a = elev_map[y-1][x-1]
-			b = elev_map[y-1][x]
-			c = elev_map[y-1][0]
-			d = elev_map[y][x-1]
-			e = elev_map[y][x]
-			f = elev_map[y][0]
-			g = elev_map[0][x-1]
-			h = elev_map[0][x]
-			i = elev_map[0][0]
-		if (x == N-1) and (y == 0):
-			a = elev_map[N-1][x-1]
-			b = elev_map[N-1][x]
-			c = elev_map[N-1][0]
-			d = elev_map[y][x-1]
-			e = elev_map[y][x]
-			f = elev_map[y][0]
-			g = elev_map[y+1][x-1]
-			h = elev_map[y+1][x]
-			i = elev_map[y+1][0]
-		if (0 < x < N-1) and (y == 0):
-			a = elev_map[N-1][x-1]
-			b = elev_map[N-1][x]
-			c = elev_map[N-1][x+1]
-			d = elev_map[y][x-1]
-			e = elev_map[y][x]
-			f = elev_map[y][x+1]
-			g = elev_map[y+1][x-1]
-			h = elev_map[y+1][x]
-			i = elev_map[y+1][x+1]
-		if (0 < x < N-1) and (y == N-1):
-			a = elev_map[y-1][x-1]
-			b = elev_map[y-1][x]
-			c = elev_map[y-1][x+1]
-			d = elev_map[y][x-1]
-			e = elev_map[y][x]
-			f = elev_map[y][x+1]
-			g = elev_map[0][x-1]
-			h = elev_map[0][x]
-			i = elev_map[0][x+1]
-				
-		dzdx = ((c + 2*f + i) - (a + 2*d + g)) / 8
-		dzdy = ((g + 2*h + i) - (a + 2*b + c))  / 8
-		aspect = 57.29578 * atan2(dzdy, -dzdx)
-	
-		if aspect < 0:
-			cell = 90.0 - aspect
-		elif aspect > 90.0:
-			cell = 360.0 - aspect + 90.0
-		else:
-			cell = 90.0 - aspect
-		return cell
-
-	def make_maps(h,  high,  N,  MU,  SD):
-		seed()
-		elev_range = 4. #uniform(0, h)
-		elev_fract = 2.2 #input("elev fract? ") #uniform(2,3)
-		veg_range = uniform(0,100) #float(input("veg %? ")) #uniform(0,100)
-		veg_fract = uniform(2,3) #float(input("veg fract? ")) #uniform(2,3)
-		#H_elev = 3. - elev_fract
-		#H_veg = 3. - veg_fract
-		print(elev_range, elev_fract, veg_range, veg_fract)
-		#X = make_elevation(h, high, D, H, N, MU, SD)
-		X = make_elevation(elev_range, high, elev_fract, N, MU, SD)
-		_slope = np.zeros((N,N),dtype = float) #[range(len(X)) for i in range(len(X[0]))]
-		_aspect = np.zeros((N,N),dtype = float) #[range(len(X)) for i in range(len(X[0]))]
-	
-		for y in range(len(X)):
-			for x in range(len(X[y])):
-				_slope[y][x] = calc_slope(X, x, y, N)
-				_aspect[y][x] = calc_aspect(X, x, y, N)
-	
-		S = _slope #possibly read-in slope here and 
-		A = _aspect
-		tV = make_temp_vegetation(1., high, veg_fract, N, MU, SD) # h needs to be veg specific
-		V = make_vegetation(tV, veg_range)
-	
-		return X, S, A, V, elev_range, elev_fract, veg_range, veg_fract
-
-	#get_topo_data(name,limit)
-	#print elev_header[4][1]
 
 
 	class T_e():
@@ -682,15 +459,16 @@ def do_sim():
 				self.TA = maxT(J) * self.gamma_t(self.t_adj(t, J)) + minT(J + 1) * (1 - self.gamma_t(self.t_adj(t, J)))
 				return self.TA
 
-		def t_ground(self, sun):
+		def t_ground(self, sun, Tg_shade, Tg_sun):
 			if sun == 0: # in shade
-				return micro_df.Tg_shade
-			if sun == 1: # in sun
-				return micro_df.Tg_sun
+				return Tg_shade
+			if sun ==1: # in sun
+				return Tg_sun
+
+		def long_atmos(self, Ta_2m):## UPDATE FOR MICROCLIM INPUT DATA...SUN Ta at 2m input!!
+			#Ta_2m= micro_df.Ta_2m
+			return 53.1e-14 * (Ta_2m + 273.)**6
         
-		def long_atmos(self, t, J): #### UPDATE FOR MICROCLIM INPUT DATA...SUN Ta at 2m input!!
-			return 53.1e-14 * (self.t_air(t, J) + 273.)**6
-	
 		def t_ave(self):
 			temp=[]
 			for i in range(24):
@@ -700,20 +478,20 @@ def do_sim():
 		#def t_ground(self, t, sun):
 		#	return sun*(self.t_ave() + self.ampl * sin((pi / 12.) * (t - 8.))) + (1.- sun) * self.t_air(t)
 	
-		def long_ground(self, t, J, sun): #### UPDATE FOR MICROCLIM INPUT DATA... sun/shade GROUND input
-			#micro = pd.read_csv('/Users/laurenneel/Desktop/Grass_RGB_DSM_Oct22/microclim_input_era5/hourly_df_TC_2021.csv', usecols=["Tg_avg"])
-			#Tg_avg = micro.iloc[t, J, sun]["Tg_avg"]
-			#return self.emmiss_soil * self.SIGMA * (Tg_avg + 273)**4
-			#print(Tg_avg)
-			return self.emmiss_soil * self.SIGMA * (self.t_ground(t, J, sun) + 273)**4
+		def long_ground(self, sun, Tg_shade, Tg_sun): #### UPDATE FOR MICROCLIM INPUT DATA... sun/shade GROUND input
+			if sun == 0:
+				return self.emmiss_soil * self.SIGMA * (Tg_shade + 273)**4
+			if sun ==1:
+				return self.emmiss_soil * self.SIGMA * (Tg_sun + 273)**4
+			#return self.emmiss_soil * self.SIGMA * (self.t_ground(sun, micro_df) + 273)**4
 	
 		def Ap_over_A(self, t,J,a_s, alpha_s):
 			Ap = 1.+ 4. * self.h * sin(self.a_o_i(t,J,a_s,alpha_s)) / (pi * self.d)
 			A= 4.+ 4. * self.h / self.d
 			return Ap / A
 	
-		def R_abs(self, t, J, sun, a_s, alpha_s): #### UPDATE FOR MICROCLIM INPUT DATA..... needs to call the right ground and air temp
-			return sun * self.abs_animal_short * (self.Ap_over_A(t,J,a_s,alpha_s) * self.sol_atm(t, J, a_s, alpha_s) + 0.5 *  self.sol_diffuse(t, J, a_s, alpha_s) + 0.5 * self.short_ground(t, J)) + 0.5 * self.abs_animal_long * (self.long_atmos(t, J) + self.long_ground(t, J, sun))
+		def R_abs(self, t, J, sun, a_s, alpha_s, Ta_2m, Tg_shade, Tg_sun): #### UPDATE FOR MICROCLIM INPUT DATA..... needs to call the right ground and air temp
+			return sun * self.abs_animal_short * (self.Ap_over_A(t,J,a_s,alpha_s) * self.sol_atm(t, J, a_s, alpha_s) + 0.5 *  self.sol_diffuse(t, J, a_s, alpha_s) + 0.5 * self.short_ground(t, J)) + 0.5 * self.abs_animal_long * (self.long_atmos(Ta_2m) + self.long_ground(sun, Tg_shade, Tg_sun))
 
 		def Q_rad(self, t, J):
 			#return self.emmiss_animal * self.SIGMA * (self.t_air(t,J) + 273.)**4
@@ -723,9 +501,11 @@ def do_sim():
 			#return 1.4 * 0.135 * sqrt(self.wind / self.char_dim)
 			return 1.4 * 0.135 * sqrt(wind / self.char_dim)
 	
-		def g_r(self, t, J, sun): #### input ground data in sun/shade here!!!
-			#return 4.* self.SIGMA * ((self.t_air(t,J) + 273.)**3) / 29.3
-			return 4.* self.SIGMA * ((self.TA + 273.)**3) / 29.3
+		def g_r(self, sun, Ta_shade, Ta_sun): #### input ground data in sun/shade here!!!
+			if sun ==0:
+				return 4.* self.SIGMA * ((Ta_shade + 273.)**3) / 29.3
+			if sun ==1:
+				return 4.* self.SIGMA * ((Ta_sun + 273.)**3) / 29.3
 	
 		def a_o_i(self, t, J, a_s, alpha_s): #angle of incidence...NEED INPUTS for a_s = slope, alpha_s = aspect  with N=0 E=90
 			self.zenith(t,J)
@@ -739,7 +519,7 @@ def do_sim():
 				else: return pi/2
 			else: return pi/2
 		
-		def t_e(self, t, J, sun, a_s, alpha_s,veg): #UPDATE FOR MICROCLIM INPUT DATA .... t_ground should be replaced with Ta at 2cm... need to set it up for different sun/shade 2cm input
+		def t_e(self, t, J, sun, a_s, alpha_s,veg, Tg_shade,Tg_sun,Ta_2m, Ta_shade, Ta_sun): #UPDATE FOR MICROCLIM INPUT DATA .... t_ground should be replaced with Ta at 2cm... need to set it up for different sun/shade 2cm input
 			#_wind = 0. #note, this is to mimic convection shadow effect
 			if sun ==1 and veg == 0: #was or not and
 				sun = 1
@@ -749,7 +529,7 @@ def do_sim():
 				wind = 0.1
 			else:
 				wind = 2.0
-			return self.t_ground(t, J, sun) + (self.R_abs(t, J, sun, a_s, alpha_s) - self.Q_rad(t, J)) / (29.3 * (self.g_Ha(wind) + self.g_r(t, J, sun)))
+			return self.t_ground(sun, Tg_shade, Tg_sun) + (self.R_abs(t, J, sun, a_s, alpha_s, Ta_2m, Tg_shade, Tg_sun) - self.Q_rad(t, J)) / (29.3 * (self.g_Ha(wind) + self.g_r(sun, Ta_shade, Ta_sun)))
 		
 		def mass(self):
 			return ((self.h * 100.) * pi * (0.5 * self.d * 100.)**2.) / 1000.
@@ -876,7 +656,7 @@ def do_sim():
 							y1 = self.position['y'] + b
 							az=radians(self.azimuth(t, J))
 							al=radians(self.altitude(t, J))
-							self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)])
+							self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)], Tg_shade,Tg_sun,Ta_2m, Ta_shade, Ta_sun)
 							up_tb =  self.update_tb()
 							diff_tb_new = abs(self.t_target - up_tb)
 							if diff_tb_new <= diff_tb:# and c <= temp_c:
@@ -1047,10 +827,10 @@ def do_sim():
 
 
 	
-	def sim_act(lizard, t,J=150.):
+	def sim_act(lizard):
 		lizard.zenith(t,J)
 		if lizard.Z > 0.:
-			lizard.te = lizard.t_e(t,J, sun=horizon_master(radians(lizard.azimuth(t, J)), elev[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], x=lizard.position['x'], y=lizard.position['y']), a_s=90.- slope[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], alpha_s=aspect[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], veg=veget[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])])
+			lizard.te = lizard.t_e(t,J, sun=horizon_master(radians(lizard.azimuth(t, J)), elev[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], x=lizard.position['x'], y=lizard.position['y']), a_s=90.- slope[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], alpha_s=aspect[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], veg=veget[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], Tg_shade, Tg_sun)
 			print(lizard.zenith(t,J))
 			if lizard.tb < lizard.te < lizard.tlow:
 				lizard.moved = 0.
@@ -1058,7 +838,6 @@ def do_sim():
 				lizard.tb = lizard.update_tb()
 				lizard.energy_balance += lizard.smr()
 				#lizard.tot_dist_moved += lizard.moved
-		
 			elif lizard.tlow <= lizard.tb <=lizard.ctmax:
 				lizard.move_reg(t,J,elev, slope, aspect, veget)
 				lizard.tb = lizard.update_tb()
@@ -1083,9 +862,29 @@ def do_sim():
 			print(str(lizard.position['x']), str(lizard.position['y']))
 			output.write(str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
             #output.write(str(e_range) + "\t" + str(e_fract) + "\t" + str(v_range) + "\t" + str(v_fract) +"\t" + str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
+            
+            
+#	for index, row in micro_df.iterrows():
+#		if (index ==2): ## just to test code without fully running
+#			break ## just to test code without fully running
+#		J = row['doy']
+#		t = row['hour']
+#		Ta_sun = row['Ta_sun']
+#		Ta_shade = row['Ta_shade']
+#		Tg_sun = row['Tg_sun']
+#		Tg_shade = row['Tg_shade']
+#		Ta_2m = row['Ta_2m']
+#		print(J,t)
+#		[sim_act(lizard, t, J) for lizard in population]
+#  
+
 	for t in times:
-		print(J, t)
-		[sim_act(lizard,t,J) for lizard in population]
+		#print(J, t)
+		[sim_act(lizard) for lizard in population]
+ 	
+#  for t in times:
+#		print(J, t)
+#		[sim_act(lizard,t,J) for lizard in population]
 
 #	tot_act, tot_smr, tot_move, tot_ave_ate =0.,0.,0., 0.
 #	for lizard in population:

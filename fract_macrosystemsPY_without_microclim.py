@@ -186,7 +186,7 @@ def do_sim():
 
 	# Air temperature data from Zion NP, east entrance
 
-	days = np.array([-16, 15, 46, 75, 106, 136, 167, 197, 228, 259, 289, 320, 350, 381])
+	days = np.array([-16, 15, 46, 75, 106, 136, 167, 197, 228, 259, 289, 320, 350, 381]) ## you need 14 numbers to get jan after and dec before the year you want
 
 	maxT = UnivariateSpline(days, maxTemps, k=3)
 	minT = UnivariateSpline(days, minTemps, k=3)
