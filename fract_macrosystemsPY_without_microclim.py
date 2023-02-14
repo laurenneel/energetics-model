@@ -1065,7 +1065,8 @@ def do_sim():
 	output2 = open(name_of_sim2+".csv", 'a')
 
 
-	
+	times = np.arange(6.,20.,1./60.).tolist()
+
 	def sim_act(lizard, t,J=150.):
 		lizard.zenith(t,J)
 		if lizard.Z > 0.:
