@@ -239,54 +239,54 @@ def do_sim():
 	novSpline = UnivariateSpline(hours,novTemps,k=3)
 	decSpline = UnivariateSpline(hours,decTemps,k=3)
 
-	def make_elevation(h, high, D, N, MU, SD):
-		seed(100) # just to get same fractal dimensions <-normally this changes
-		Arand = high
-		i0, j0 = 0., 0.
-		H = 3. - D
-		A = np.zeros((N,N),dtype = complex) #complex number plane
-		for i in range(N//2):
-			for j in range(N//2):
-				phase = 2. * pi  * uniform(0,high)/Arand
-				if i != 0 or j != 0:
-					rad = pow(i*i + j*j,-(H + 1.)/2.) * normal(MU, SD)
-				else:
-					rad = 0.
-				A[i][j] = complex(rad * cos(phase), rad * sin(phase))
-				if  i == 0.:
-					i0 = 0.
-				else:
-					i0 = N-i #i added int(N-i)
-				if j0 == 0.:
-					j0 = 0.
-				else:
-					j0 = N-j #i added int(N-i)
-				if A[int(i0)][int(j0)] == complex(rad * cos(phase), -rad*sin(phase)):
-					break
-			
-		A[N//2][0]= complex(A[N//2][0].real, 0)
-		A[0][N//2]= complex(A[N//2][0].real, 0)
-		A[N//2][N//2]= complex(A[N//2][0].real, 0)
+	#def make_elevation(h, high, D, N, MU, SD):
+	#	seed(100) # just to get same fractal dimensions <-normally this changes
+	#	Arand = high
+	#	i0, j0 = 0., 0.
+	#	H = 3. - D
+	#	A = np.zeros((N,N),dtype = complex) #complex number plane
+	#	for i in range(N//2):
+	#		for j in range(N//2):
+	#			phase = 2. * pi  * uniform(0,high)/Arand
+	#			if i != 0 or j != 0:
+	#				rad = pow(i*i + j*j,-(H + 1.)/2.) * normal(MU, SD)
+	#			else:
+	#				rad = 0.
+	#			A[i][j] = complex(rad * cos(phase), rad * sin(phase))
+	#			if  i == 0.:
+	#				i0 = 0.
+	#			else:
+	#				i0 = N-i #i added int(N-i)
+	#			if j0 == 0.:
+	#				j0 = 0.
+	#			else:
+	#				j0 = N-j #i added int(N-i)
+	#			if A[int(i0)][int(j0)] == complex(rad * cos(phase), -rad*sin(phase)):
+	#				break
+	#		
+	#	A[N//2][0]= complex(A[N//2][0].real, 0)
+	#	A[0][N//2]= complex(A[N//2][0].real, 0)
+	#	A[N//2][N//2]= complex(A[N//2][0].real, 0)
 
-		for i in range(1, int(N/2 -1)):
-			for j in range(1, int(N/2 -1)):
-				phase = 2.* pi* uniform(0,high)/Arand
-				rad = pow(i*i + j*j, -(H+1)/2.) * normal(MU,SD)
-				A[i][N-j] = complex(rad * cos(phase), rad * sin(phase))
-				A[N-i][j] = complex(rad * cos(phase), -rad * sin(phase))
-		X = ifft2(A).real
-		X= h * (X - min(X.real)) / (max(X.real) - min(X.real))
-		z = X.view(float)
-		return z
+	#	for i in range(1, int(N/2 -1)):
+	#		for j in range(1, int(N/2 -1)):
+	#			phase = 2.* pi* uniform(0,high)/Arand
+	#			rad = pow(i*i + j*j, -(H+1)/2.) * normal(MU,SD)
+	#			A[i][N-j] = complex(rad * cos(phase), rad * sin(phase))
+	#			A[N-i][j] = complex(rad * cos(phase), -rad * sin(phase))
+	#	X = ifft2(A).real
+	#	X= h * (X - min(X.real)) / (max(X.real) - min(X.real))
+	#	z = X.view(float)
+	#	return z
 
-	def make_temp_vegetation(h, high, D, N, MU, SD):
-		print(D)
-		H = 3. - D
-		temp_v = make_elevation(h, high, D, N, MU, SD)
-		return temp_v
+	#def make_temp_vegetation(h, high, D, N, MU, SD):
+	#	print(D)
+	#	H = 3. - D
+	#	temp_v = make_elevation(h, high, D, N, MU, SD)
+	#	return temp_v
 
-	def make_vegetation(temp_v, pcnt):
-		return np.array(temp_v > percentile(temp_v, 100.-pcnt))#, int)
+	#def make_vegetation(temp_v, pcnt):
+	#	return np.array(temp_v > percentile(temp_v, 100.-pcnt))#, int)
 
 
 
@@ -468,19 +468,19 @@ def do_sim():
 				self.TA = maxT(J) * self.gamma_t(self.t_adj(t, J)) + minT(J + 1) * (1 - self.gamma_t(self.t_adj(t, J)))
 				return self.TA
 
-		def t_ground(self, sun, Tg_shade=None, Tg_sun=None):
+		def t_ground(self, sun, Tg_shade, Tg_sun):
 			if Tg_shade is None:
-				Tg_shade = micro_df_minute_res.Tg_shade
+				Tg_shade = micro_df_minute_res.loc[J, "Tg_shade"].loc[t]
 			if Tg_sun is None:
-				Tg_sun= micro_df_minute_res.Tg_sun
-			if sun == 0: # in shade
+				Tg_sun= micro_df_minute_res.loc[J, "Tg_sun"].loc[t]
+			if sun <= 0.5: # in shade
 				return Tg_shade
-			if sun ==1: # in sun
+			if sun >0.5: # in sun
 				return Tg_sun
 
 		def long_atmos(self, Ta_2m = None):## UPDATE FOR MICROCLIM INPUT DATA...SUN Ta at 2m input!!
 			if Ta_2m is None:
-				Ta_2m = micro_df_minute_res.Ta_2m
+				Ta_2m = micro_df_minute_res.loc[J, "Ta_2m"].loc[t]
 			#Ta_2m= micro_df.Ta_2m
 			return 53.1e-14 * (Ta_2m + 273.)**6
         
@@ -493,14 +493,14 @@ def do_sim():
 		#def t_ground(self, t, sun):
 		#	return sun*(self.t_ave() + self.ampl * sin((pi / 12.) * (t - 8.))) + (1.- sun) * self.t_air(t)
 	
-		def long_ground(self, sun, Tg_shade=None, Tg_sun=None): #### UPDATE FOR MICROCLIM INPUT DATA... sun/shade GROUND input
+		def long_ground(self, sun, Tg_shade, Tg_sun): #### UPDATE FOR MICROCLIM INPUT DATA... sun/shade GROUND input
 			if Tg_shade is None:
-				Tg_shade = micro_df_minute_res.Tg_shade
+				Tg_shade = micro_df_minute_res.loc[J, "Tg_shade"].loc[t]
 			if Tg_sun is None:
-				Tg_sun= micro_df_minute_res.Tg_sun
-			if sun == 0:
+				Tg_sun= micro_df_minute_res.loc[J, "Tg_sun"].loc[t]
+			if sun <= 0.5:
 				return self.emmiss_soil * self.SIGMA * (Tg_shade + 273)**4
-			if sun ==1:
+			if sun >0.5:
 				return self.emmiss_soil * self.SIGMA * (Tg_sun + 273)**4
 			#return self.emmiss_soil * self.SIGMA * (self.t_ground(sun, micro_df) + 273)**4
 	
@@ -509,23 +509,23 @@ def do_sim():
 			A= 4.+ 4. * self.h / self.d
 			return Ap / A
 	
-		def R_abs(self, t, J, sun, a_s, alpha_s, Ta_2m= None, Tg_shade=None, Tg_sun=None): #### UPDATE FOR MICROCLIM INPUT DATA..... needs to call the right ground and air temp
+		def R_abs(self, t, J, sun, a_s, alpha_s, Ta_2m, Tg_shade, Tg_sun): #### UPDATE FOR MICROCLIM INPUT DATA..... needs to call the right ground and air temp
 			if Ta_2m is None:
-				Ta_2m = micro_df_minute_res.Ta_2m
+				Ta_2m = micro_df_minute_res.loc[J, "Ta_2m"].loc[t]
 			if Tg_shade is None:
-				Tg_shade = micro_df_minute_res.Tg_shade
+				Tg_shade = micro_df_minute_res.loc[J, "Tg_shade"].loc[t]
 			if Tg_sun is None:
-				Tg_sun = micro_df_minute_res.Tg_sun
+				Tg_sun = micro_df_minute_res.loc[J, "Tg_sun"].loc[t]
 			return sun * self.abs_animal_short * (self.Ap_over_A(t,J,a_s,alpha_s) * self.sol_atm(t, J, a_s, alpha_s) + 0.5 *  self.sol_diffuse(t, J, a_s, alpha_s) + 0.5 * self.short_ground(t, J, a_s, alpha_s)) + 0.5 * self.abs_animal_long * (self.long_atmos(Ta_2m) + self.long_ground(sun, Tg_shade, Tg_sun))
 
 		def Q_rad(self, Ta_shade, Ta_sun, sun):
 			if Ta_shade is None: 
-				Ta_shade = micro_df_minute_res.Ta_shade
+				Ta_shade = micro_df_minute_res.loc[J, "Ta_shade"].loc[t]
 			if Ta_sun is None:
-				Ta_sun = micro_df_minute_res.Ta_sun
-			if sun == 0:
+				Ta_sun = micro_df_minute_res.loc[J, "Ta_sun"].loc[t]
+			if sun <= 0.5:
 				return self.emmiss_animal * self.SIGMA * (Ta_shade + 273.)**4
-			if sun == 1:
+			if sun > 0.5:
 				return self.emmiss_animal * self.SIGMA * (Ta_sun + 273.)**4
 
 			#return self.emmiss_animal * self.SIGMA * (self.t_air(t,J) + 273.)**4
@@ -535,14 +535,14 @@ def do_sim():
 			#return 1.4 * 0.135 * sqrt(self.wind / self.char_dim)
 			return 1.4 * 0.135 * sqrt(wind / self.char_dim)
 	
-		def g_r(self, sun, Ta_shade=None, Ta_sun=None): #### input ground data in sun/shade here!!!
+		def g_r(self, sun, Ta_shade, Ta_sun): #### input ground data in sun/shade here!!!
 			if Ta_shade is None:
-				Ta_shade = micro_df_minute_res.Ta_shade
+				Ta_shade = micro_df_minute_res.loc[J, "Ta_shade"].loc[t]
 			if Ta_sun is None:
-				Ta_sun = micro_df_minute_res.Ta_sun
-			if sun ==0:
+				Ta_sun = micro_df_minute_res.loc[J, "Ta_sun"].loc[t]
+			if sun <= 0.5:
 				return 4.* self.SIGMA * ((Ta_shade + 273.)**3) / 29.3
-			if sun ==1:
+			if sun > 0.5:
 				return 4.* self.SIGMA * ((Ta_sun + 273.)**3) / 29.3
 	
 		def a_o_i(self, t, J, a_s, alpha_s): #angle of incidence...NEED INPUTS for a_s = slope, alpha_s = aspect  with N=0 E=90
@@ -929,13 +929,13 @@ def do_sim():
 #		print(J, t)
 #		[sim_act(lizard,t,J) for lizard in population]
 
-#	tot_act, tot_smr, tot_move, tot_ave_ate =0.,0.,0., 0.
-#	for lizard in population:
-#		tot_act += float(lizard.total_activity)
-#		tot_smr += lizard.energy_balance
-#		tot_move += lizard.tot_dist_moved
-#		tot_ave_ate += float(lizard.ate)
-#	output2.write(str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
+	tot_act, tot_smr, tot_move, tot_ave_ate =0.,0.,0., 0.
+	for lizard in population:
+		tot_act += float(lizard.total_activity)
+		tot_smr += lizard.energy_balance
+		tot_move += lizard.tot_dist_moved
+		tot_ave_ate += float(lizard.ate)
+	output2.write(str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
 			
 st1= time()
 name_of_sim="details"#raw_input("name of file? ")

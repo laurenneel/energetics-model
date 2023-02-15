@@ -546,7 +546,7 @@ def do_sim():
 			self.TA= 0.
 		
 			self.x_min, self.y_min = 0., 0.
-			self.x_max, self.y_max = 133., 176. #x_max = ncols, y_max = nrows #### CHANGED FROM SEARS 99. for each 8feb!
+			self.x_max, self.y_max = 132., 132. #x_max = ncols, y_max = nrows #### CHANGED FROM SEARS 99. for each 8feb!
 			self.position = {'x':rand() * self.x_max, 'y': rand() * self.y_max}
 		
 			self.thigh =  35.
