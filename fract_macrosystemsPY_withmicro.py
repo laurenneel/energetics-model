@@ -19,6 +19,7 @@ from math import exp, log, sin, cos, sqrt, acos, asin, atan, atan2
 #from numpy import arccos as acos
 import pandas as pd ## added by LN
 import math
+import csv
 
 seed() #99
 
@@ -123,34 +124,61 @@ else:
   
 #### aspect  
 aspect = aspect[aspect != -9999]
-shape = aspect.shape[0]
+shape1 = aspect.shape[0]
 
-if shape > (132 * 132):
-  shape = (132, 132)
-  aspect = np.reshape(elev[:shape[0]*shape[1]], shape)
+if shape1 > (132 * 132):
+  shape1 = (132, 132)
+  aspect = np.reshape(aspect[:shape1[0]*shape1[1]], shape1)
 else:
-  aspect = np.reshape(aspect, (int(np.sqrt(shape)), int(np.sqrt(shape))))
+  aspect = np.reshape(aspect, (int(np.sqrt(shape1)), int(np.sqrt(shape1))))
 
 #### slope  
 slope = slope[slope != -9999]
-shape = slope.shape[0]
+shape2 = slope.shape[0]
 
-if shape > (132 * 132):
-  shape = (132, 132)
-  slope = np.reshape(elev[:shape[0]*shape[1]], shape)
+if shape2 > (132 * 132):
+  shape2 = (132, 132)
+  slope = np.reshape(slope[:shape2[0]*shape2[1]], shape2)
 else:
-  slope = np.reshape(slope, (int(np.sqrt(shape)), int(np.sqrt(shape))))
+  slope = np.reshape(slope, (int(np.sqrt(shape2)), int(np.sqrt(shape2))))
   
   
   #### veget  
 veget = veget[veget != -9999]
-shape = veget.shape[0]
+shape3 = veget.shape[0]
 
-if shape > (132 * 132):
-  shape = (132, 132)
-  veget = np.reshape(elev[:shape[0]*shape[1]], shape)
+if shape3 > (132 * 132):
+  shape3 = (132, 132)
+  veget = np.reshape(veget[:shape3[0]*shape3[1]], shape3)
 else:
-  veget = np.reshape(veget, (int(np.sqrt(shape)), int(np.sqrt(shape))))
+  veget = np.reshape(veget, (int(np.sqrt(shape3)), int(np.sqrt(shape3))))
+  
+  
+  
+##### slope  
+#slope = slope[slope != -9999]
+#shape = slope.shape[0]
+#
+#if shape > (132 * 132):
+#  shape = (132, 132)
+#  slope = np.reshape(elev[:shape[0]*shape[1]], shape)
+#else:
+#  slope = np.reshape(slope, (int(np.sqrt(shape)), int(np.sqrt(shape))))
+#  
+#  
+#  #### veget  
+#veget = veget[veget != -9999]
+#shape = veget.shape[0]
+#
+#if shape > (132 * 132):
+#  shape = (132, 132)
+#  veget = np.reshape(elev[:shape[0]*shape[1]], shape)
+#else:
+#  veget = np.reshape(veget, (int(np.sqrt(shape)), int(np.sqrt(shape))))
+#    
+  
+  
+  
   
   
   
@@ -304,7 +332,7 @@ def do_sim():
 
 
 	class T_e():
-		def __init__(self, emissivity = 0.95, phi = 34., longitude = 74., elev = 0., h = 0.07, d = 0.2, emmiss_animal = 0.95, sky = 0.7, r_soil = 0.3, emmiss_soil = 0.95, abs_animal_long = 0.97, abs_animal_short = 0.7, Ta_min0 = 20., Ta_min1 = 20., Ta_min2 = 20., Ta_max0 = 35., Ta_max1 = 35., Ta_max2 = 35., ampl = 15., wind = 0.1):
+		def __init__(self, emissivity = 0.95, phi = 34., longitude = 109., elev = 0., h = 0.07, d = 0.2, emmiss_animal = 0.95, sky = 0.7, r_soil = 0.3, emmiss_soil = 0.94, abs_animal_long = 0.97, abs_animal_short = 0.7, Ta_min0 = 20., Ta_min1 = 20., Ta_min2 = 20., Ta_max0 = 35., Ta_max1 = 35., Ta_max2 = 35., ampl = 15., wind = 0.1):
 			self.SIGMA =  5.673e-8
 			self.SOLAR = 1360.
 			self.emissivity = emissivity
@@ -338,9 +366,9 @@ def do_sim():
 			self.x_max, self.y_max = 132., 132. #x_max = ncols, y_max = nrows #### CHANGED FROM SEARS 99. for each 8feb!
 			self.position = {'x':rand() * self.x_max, 'y': rand() * self.y_max}
 		
-			self.thigh =  35.
-			self.tlow = 29.
-			self.topt = 32.
+			self.thigh =  39. #sears had 35.#Upper voluntary max
+			self.tlow = 29. #sears had 29.
+			self.topt = 33. #sears had 32.
 			self.mu = 0.
 			self.kappa = 0.25
 			self.beta_alpha = 1.
@@ -354,13 +382,13 @@ def do_sim():
 			self.te = 20.
 			self.orientation = vonmises(self.mu, self.kappa)
 			self.dist = 0.
-			self.ctmax = 39.
+			self.ctmax = 40.
 			self.moved = 0
 			self.cost = 0
 			self.totenergy = 0.
 			self.dist = 0.
 			self.active = 0
-			self.t_target = 32.
+			self.t_target = 35. #previously 32
 			self.db = 0.
 			self.de = 0.
 			self.energy_balance = 0.
@@ -457,38 +485,38 @@ def do_sim():
 		def gamma_t(self, t):
 			return 0.44 - 0.46 * sin(t * pi / 12. + 0.9) + 0.11 * sin(2. * t * pi / 12. + 0.9)
 
-		def t_air(self, t, J):
-			if (t >= 0.) and (t <= 5.):
-				self.TA = maxT(J - 1) * self.gamma_t(self.t_adj(t, J)) + minT(J) * (1 - self.gamma_t(self.t_adj(t, J)))
-				return self.TA
-			if (t > 5.) and (t <= 14.):
-				self.TA = maxT(J) * self.gamma_t(self.t_adj(t, J)) + minT(J) * (1 - self.gamma_t(self.t_adj(t, J)))
-				return self.TA
-			if (t > 14.) and (t <= 24.):
-				self.TA = maxT(J) * self.gamma_t(self.t_adj(t, J)) + minT(J + 1) * (1 - self.gamma_t(self.t_adj(t, J)))
-				return self.TA
+		#def t_air(self, t, J):
+		#	if (t >= 0.) and (t <= 5.):
+		#		self.TA = maxT(J - 1) * self.gamma_t(self.t_adj(t, J)) + minT(J) * (1 - self.gamma_t(self.t_adj(t, J)))
+		#		return self.TA
+		#	if (t > 5.) and (t <= 14.):
+		#		self.TA = maxT(J) * self.gamma_t(self.t_adj(t, J)) + minT(J) * (1 - self.gamma_t(self.t_adj(t, J)))
+		#		return self.TA
+		#	if (t > 14.) and (t <= 24.):
+		#		self.TA = maxT(J) * self.gamma_t(self.t_adj(t, J)) + minT(J + 1) * (1 - self.gamma_t(self.t_adj(t, J)))
+		#		return self.TA
 
 		def t_ground(self, sun, Tg_shade, Tg_sun):
 			if Tg_shade is None:
 				Tg_shade = micro_df_minute_res.loc[J, "Tg_shade"].loc[t]
 			if Tg_sun is None:
 				Tg_sun= micro_df_minute_res.loc[J, "Tg_sun"].loc[t]
-			if sun <= 0.5: # in shade
+			if sun >= 0.5: # in shade
 				return Tg_shade
-			if sun >0.5: # in sun
+			if sun < 0.5: # in sun
 				return Tg_sun
 
-		def long_atmos(self, Ta_2m = None):## UPDATE FOR MICROCLIM INPUT DATA...SUN Ta at 2m input!!
+		def long_atmos(self, Ta_2m):## UPDATE FOR MICROCLIM INPUT DATA...SUN Ta at 2m input!!
 			if Ta_2m is None:
 				Ta_2m = micro_df_minute_res.loc[J, "Ta_2m"].loc[t]
 			#Ta_2m= micro_df.Ta_2m
 			return 53.1e-14 * (Ta_2m + 273.)**6
         
-		def t_ave(self):
-			temp=[]
-			for i in range(24):
-				temp.append(self.t_air(i, J))
-			return np.mean(temp)
+		#def t_ave(self):
+		#	temp=[]
+		#	for i in range(24):
+		#		temp.append(self.t_air(i, J))
+		#	return np.mean(temp)
 	
 		#def t_ground(self, t, sun):
 		#	return sun*(self.t_ave() + self.ampl * sin((pi / 12.) * (t - 8.))) + (1.- sun) * self.t_air(t)
@@ -498,9 +526,9 @@ def do_sim():
 				Tg_shade = micro_df_minute_res.loc[J, "Tg_shade"].loc[t]
 			if Tg_sun is None:
 				Tg_sun= micro_df_minute_res.loc[J, "Tg_sun"].loc[t]
-			if sun <= 0.5:
+			if sun >= 0.5:
 				return self.emmiss_soil * self.SIGMA * (Tg_shade + 273)**4
-			if sun >0.5:
+			if sun < 0.5:
 				return self.emmiss_soil * self.SIGMA * (Tg_sun + 273)**4
 			#return self.emmiss_soil * self.SIGMA * (self.t_ground(sun, micro_df) + 273)**4
 	
@@ -516,16 +544,18 @@ def do_sim():
 				Tg_shade = micro_df_minute_res.loc[J, "Tg_shade"].loc[t]
 			if Tg_sun is None:
 				Tg_sun = micro_df_minute_res.loc[J, "Tg_sun"].loc[t]
-			return sun * self.abs_animal_short * (self.Ap_over_A(t,J,a_s,alpha_s) * self.sol_atm(t, J, a_s, alpha_s) + 0.5 *  self.sol_diffuse(t, J, a_s, alpha_s) + 0.5 * self.short_ground(t, J, a_s, alpha_s)) + 0.5 * self.abs_animal_long * (self.long_atmos(Ta_2m) + self.long_ground(sun, Tg_shade, Tg_sun))
+			absorbed_radiation = sun * self.abs_animal_short * (self.Ap_over_A(t,J,a_s,alpha_s) * self.sol_atm(t, J, a_s, alpha_s) + 0.5 *  self.sol_diffuse(t, J, a_s, alpha_s) + 0.5 * self.short_ground(t, J, a_s, alpha_s)) + 0.5 * self.abs_animal_long * (self.long_atmos(Ta_2m) + self.long_ground(sun, Tg_shade, Tg_sun))
+			return absorbed_radiation
+			#return sun * self.abs_animal_short * (self.Ap_over_A(t,J,a_s,alpha_s) * self.sol_atm(t, J, a_s, alpha_s) + 0.5 *  self.sol_diffuse(t, J, a_s, alpha_s) + 0.5 * self.short_ground(t, J, a_s, alpha_s)) + 0.5 * self.abs_animal_long * (self.long_atmos(Ta_2m) + self.long_ground(sun, Tg_shade, Tg_sun))
 
 		def Q_rad(self, Ta_shade, Ta_sun, sun):
 			if Ta_shade is None: 
 				Ta_shade = micro_df_minute_res.loc[J, "Ta_shade"].loc[t]
 			if Ta_sun is None:
 				Ta_sun = micro_df_minute_res.loc[J, "Ta_sun"].loc[t]
-			if sun <= 0.5:
+			if sun >= 0.5:
 				return self.emmiss_animal * self.SIGMA * (Ta_shade + 273.)**4
-			if sun > 0.5:
+			if sun < 0.5:
 				return self.emmiss_animal * self.SIGMA * (Ta_sun + 273.)**4
 
 			#return self.emmiss_animal * self.SIGMA * (self.t_air(t,J) + 273.)**4
@@ -540,9 +570,9 @@ def do_sim():
 				Ta_shade = micro_df_minute_res.loc[J, "Ta_shade"].loc[t]
 			if Ta_sun is None:
 				Ta_sun = micro_df_minute_res.loc[J, "Ta_sun"].loc[t]
-			if sun <= 0.5:
+			if sun >= 0.5:
 				return 4.* self.SIGMA * ((Ta_shade + 273.)**3) / 29.3
-			if sun > 0.5:
+			if sun < 0.5:
 				return 4.* self.SIGMA * ((Ta_sun + 273.)**3) / 29.3
 	
 		def a_o_i(self, t, J, a_s, alpha_s): #angle of incidence...NEED INPUTS for a_s = slope, alpha_s = aspect  with N=0 E=90
@@ -559,14 +589,18 @@ def do_sim():
 		
 		def t_e(self, t, J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun, a_s, alpha_s,veg): #UPDATE FOR MICROCLIM INPUT DATA .... t_ground should be replaced with Ta at 2cm... need to set it up for different sun/shade 2cm input
 			#_wind = 0. #note, this is to mimic convection shadow effect
-			if sun ==1 and veg == 0: #was or not and
-				sun = 1
+			if sun ==0 and veg == 0: #was or not and
+				sun = 0
 			else:
 				sun = 0.375
 			if veg == 1:
 				wind = 0.1
 			else:
 				wind = 2.0
+			operative_temp = self.t_ground(sun, Tg_shade, Tg_sun) + (self.R_abs(t, J, sun, a_s, alpha_s, Ta_2m, Tg_shade, Tg_sun) - self.Q_rad(Ta_shade, Ta_sun, sun)) / (29.3 * (self.g_Ha(wind) + self.g_r(sun, Ta_shade, Ta_sun)))
+
+			return operative_temp
+
 			return self.t_ground(sun, Tg_shade, Tg_sun) + (self.R_abs(t, J, sun, a_s, alpha_s, Ta_2m, Tg_shade, Tg_sun) - self.Q_rad(Ta_shade, Ta_sun, sun)) / (29.3 * (self.g_Ha(wind) + self.g_r(sun, Ta_shade, Ta_sun)))
 		
 		def mass(self):
@@ -575,9 +609,13 @@ def do_sim():
 	
 		def update_tb(self):
 			if self.tb <= self.te: 
-				return self.tb + (1. - exp(-1. / self.h_t)) * (self.te - self.tb) #heating
+				new_tb = self.tb + (1. - exp(-1. / self.h_t)) * (self.te - self.tb) #heating
+				return new_tb
+				#return self.tb + (1. - exp(-1. / self.h_t)) * (self.te - self.tb) #heating
 			if self.tb  > self.te: 
-				return self.tb + (1. - exp(-1. / self.c_t)) * (self.te - self.tb) #cooling
+				new_tb = self.tb + (1. - exp(-1. / self.c_t)) * (self.te - self.tb) #cooling
+				return new_tb
+				#return self.tb + (1. - exp(-1. / self.c_t)) * (self.te - self.tb) #cooling
 
 		def mei(self, x):
 			#mass = 10.
@@ -861,16 +899,66 @@ def do_sim():
     #ppulation is defined and instantiated with a list of T_e class objects before sim_act function is called
     # sim_act
 
-	output = open(name_of_sim+".csv", 'a')
-	output2 = open(name_of_sim2+".csv", 'a')
+	#output = open(name_of_sim+".csv", 'a')
+	#output2 = open(name_of_sim2+".csv", 'a')
 
 
 	#times = np.arange(6.,20.,1./60.).tolist() 
 
  
+#	def sim_act(lizard, t, J):
+#		lizard.zenith(t,J=J) #J=J
+#		print("zenith angle: ", lizard.Z)
+#		if lizard.Z > 0.:
+#			Ta_sun = micro_df_minute_res.loc[index, "Ta_sun"]
+#			Ta_shade = micro_df_minute_res.loc[index, "Ta_shade"]
+#			Tg_sun = micro_df_minute_res.loc[index, "Tg_sun"]
+#			Tg_shade = micro_df_minute_res.loc[index, "Tg_shade"]
+#			Ta_2m = micro_df_minute_res.loc[index, "Ta_2m"]
+#			print("Before floor y:", lizard.position['y'])
+#			print("Before floor x:", lizard.position['x'])
+#			lizard.te = lizard.t_e(t,J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun=horizon_master(radians(lizard.azimuth(t, J)), elev[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], x=lizard.position['x'], y=lizard.position['y']), a_s=90.- slope[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], alpha_s=aspect[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], veg=veget[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])])
+#			print("Lizard operative temp: ", lizard.te)
+#			print(lizard.zenith(t,J))
+#			if lizard.tb < lizard.te < lizard.tlow:
+#				print("case 1: lizard is not active and has not moved")
+#				lizard.moved = 0.
+#				lizard.active = 0.
+#				lizard.tb = lizard.update_tb()
+#				lizard.energy_balance += lizard.smr()
+#				#lizard.tot_dist_moved += lizard.moved
+#			elif lizard.tlow <= lizard.tb <=lizard.ctmax:
+#				print("case 2: lizard is active and moves")
+#				lizard.move_reg(t,J,elev, slope, aspect, veget)
+#				lizard.tb = lizard.update_tb()
+#				lizard.energy_balance += lizard.smr()
+#				lizard.tot_dist_moved += lizard.moved
+#				lizard.ate += binomial(1, 0.05)
+#				lizard.total_activity += 1.
+#				lizard.active = 1.
+#			else:
+#				if lizard.te > lizard.ctmax:
+#					print("case 3: lizard is not active and has not moved")
+#					lizard.moved = 0.
+#					lizard.active = 0.
+#					lizard.energy_balance += lizard.smr()
+#					#lizard.tot_dist_moved += lizard.moved
+#				else: 
+#					print("case 4: lizard is not active and not moving")
+#					lizard.active = 0.
+#					lizard.tb = lizard.update_tb()
+#					lizard.energy_balance += lizard.smr()
+#					#lizard.tot_dist_moved += lizard.moved
+#					#lizard.ate += binomial(1, 0.05)
+#					#lizard.total_activity += 1.
+#			print(str(lizard.position['x']), str(lizard.position['y']))
+#			output.write(str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
+#           #output.write(str(e_range) + "\t" + str(e_fract) + "\t" + str(v_range) + "\t" + str(v_fract) +"\t" + str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
+
 	def sim_act(lizard, t, J):
 		lizard.zenith(t,J=J) #J=J
 		print("zenith angle: ", lizard.Z)
+		print("Julian day is: ", J)
 		if lizard.Z > 0.:
 			Ta_sun = micro_df_minute_res.loc[index, "Ta_sun"]
 			Ta_shade = micro_df_minute_res.loc[index, "Ta_shade"]
@@ -910,24 +998,87 @@ def do_sim():
 					lizard.active = 0.
 					lizard.tb = lizard.update_tb()
 					lizard.energy_balance += lizard.smr()
-					#lizard.tot_dist_moved += lizard.moved
-					#lizard.ate += binomial(1, 0.05)
-					#lizard.total_activity += 1.
-			print(str(lizard.position['x']), str(lizard.position['y']))
-			output.write(str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
-           #output.write(str(e_range) + "\t" + str(e_fract) + "\t" + str(v_range) + "\t" + str(v_fract) +"\t" + str(t)+ "\t" + str(lizard.position['x']) + "\t" +str(lizard.position['y']) + "\t" + str(lizard.te) + "\t" +str(lizard.tb) + "\t" + str(lizard.active) +"\t" + str(lizard.mei())+"\t" + str(lizard.smr()) + "\t" + str(lizard.net())  + "\t"+ str(lizard.moved)+ "\t"+ str(lizard.ate)+"\n")
+     
+	with open('output.csv', mode='w', newline='') as output_file: ## ALL DATA
+		fieldnames = ['time', 'J', 'x', 'y', 'te', 'tb', 'total_activity', 'mei', 'net', 'moved', 'smr', 'energy_balance']
+		output_writer = csv.DictWriter(output_file, fieldnames=fieldnames)
+		output_writer.writeheader()
+		for index, row in micro_df_minute_res.iterrows(): 
+			t = row['hour_float']
+			J = row['day_of_year']
+			if t >= 6 and t < 20:
+				for lizard in population:
+					sim_act(lizard, t, J)
+					output_writer.writerow({
+                    'time': t,
+                    'J': J,
+                    'x': lizard.position['x'],
+                    'y': lizard.position['y'],
+                    'te': lizard.te,
+                    'tb': lizard.tb,
+                    'total_activity': lizard.total_activity,
+                    'mei': lizard.mei(),
+                    'net': lizard.net(),
+                    'moved': lizard.moved,
+                    'smr': lizard.smr(),
+                    'energy_balance': lizard.energy_balance
+                })
+     
+     
+	with open('overall_averages.csv', mode='w', newline='') as output_file: 
+		fieldnames = ['te', 'tb', 'total_activity', 'mei', 'net', 'moved', 'smr', 'energy_balance']
+		output_writer = csv.DictWriter(output_file, fieldnames=fieldnames)
+		output_writer.writeheader()
+
+    # calculate overall averages
+		te_avg = sum([lizard.te for lizard in population]) / len(population)
+		tb_avg = sum([lizard.tb for lizard in population]) / len(population)
+		total_activity_avg = sum([lizard.total_activity for lizard in population]) / len(population)
+		mei_avg = sum([lizard.mei() for lizard in population]) / len(population)
+		net_avg = sum([lizard.net() for lizard in population]) / len(population)
+		moved_avg = sum([lizard.moved for lizard in population]) / len(population)
+		smr_avg = sum([lizard.smr() for lizard in population]) / len(population)
+		energy_balance_avg = sum([lizard.energy_balance for lizard in population]) / len(population)
+  
+		output_writer.writerow({
+        'te': te_avg,
+        'tb': tb_avg,
+        'total_activity': total_activity_avg,
+        'mei': mei_avg,
+        'net': net_avg,
+        'moved': moved_avg,
+        'smr': smr_avg,
+        'energy_balance': energy_balance_avg
+    })
+
+		with open('daily_averages.csv', mode='a', newline='') as output_file:
+			fieldnames = ['day_of_year', 'te_avg', 'tb_avg', 'total_activity_avg', 'mei_avg', 'net_avg', 'moved_avg', 'smr_avg', 'energy_balance_avg']
+			output_writer = csv.DictWriter(output_file, fieldnames=fieldnames)
+			output_writer.writeheader()
+
+	    # iterate over days and calculate daily averages
+			for day in range(1, 367):
+				lizards_on_day = [lizard for lizard in population if lizard.day_of_year == day]
+				print(f"Day {day}: {len(lizards_on_day)} lizards")
+				if lizards_on_day:
+					te_avg = sum([lizard.te for lizard in lizards_on_day]) / len(lizards_on_day)
+					tb_avg = sum([lizard.tb for lizard in lizards_on_day]) / len(lizards_on_day)
+					total_activity_avg = sum([lizard.total_activity for lizard in lizards_on_day]) / len(lizards_on_day)
+					mei_avg = sum([lizard.mei() for lizard in lizards_on_day]) / len(lizards_on_day)
+					net_avg = sum([lizard.net() for lizard in lizards_on_day]) / len(lizards_on_day)
+					moved_avg = sum([lizard.moved for lizard in lizards_on_day]) / len(lizards_on_day)
+					smr_avg = sum([lizard.smr() for lizard in lizards_on_day]) / len(lizards_on_day)
+					energy_balance_avg = sum([lizard.energy_balance() for lizard in lizards_on_day]) / len(lizards_on_day)
+					output_writer.writerow({'day_of_year': day, 'te_avg': te_avg, 'tb_avg': tb_avg, 'total_activity_avg': total_activity_avg, 'mei_avg': mei_avg, 'net_avg': net_avg, 'moved_avg': moved_avg, 'smr_avg': smr_avg, 'energy_balance_avg': energy_balance_avg})
 
 
-	for index, row in micro_df_minute_res.iterrows(): 
-		t = row['hour_float']
-		J = row['day_of_year']
-		if t >= 6 and t < 20:
-			print(J, t)
-			[sim_act(lizard, t, J) for lizard in population]
- 	
-#  for t in times:
-#		print(J, t)
-#		[sim_act(lizard,t,J) for lizard in population]
+#	for index, row in micro_df_minute_res.iterrows(): 
+#		t = row['hour_float']
+#		J = row['day_of_year']
+#		if t >= 6 and t < 20:
+#			print(J, t)
+#			[sim_act(lizard, t, J) for lizard in population]
+
 
 	tot_act, tot_smr, tot_move, tot_ave_ate =0.,0.,0., 0.
 	for lizard in population:
@@ -948,45 +1099,6 @@ output2.close()
 #output.write("elev\tefract\tveg\tvfract\ttime\tX\tY\tte\ttb\tactive\tmei\tsmr\tnet\tmoved\tate\n") #MS original
 output.write("elev\ttime\tX\tY\tte\ttb\tactive\tmei\tsmr\tnet\tmoved\tate\n")
 output.close()
-
-	#for t in times:
-    #    print(J, t)
-    #    for lizard in population:
-    #        print("lizard x position:", lizard.position['x'])
-    #        print("lizard y position:", lizard.position['y'])
-    #        print("elev array size:", len(elev))
-    #        print("slope array size:", len(slope))
-    #        print("aspect array size:", len(aspect))
-    #        print("veget array size:", len(veget))
-    #        sim_act(lizard,t,J)
-    
-
-#"""
-#jobs = []
-#for x in range(1000):
-#	p=multiprocessing.Process(target=do_sim, args=())
-#	jobs.append(p)
-#	p.start()
-#for x in range(10):
-#	jobs[x].join()
-#"""
-#
-#
-#
-#
-#"""
-#from multiprocessing import Pool
-#pool = Pool(8)
-#for _ in range(256): #was 1000 == number of maps , or the simulation number
-#	pool.apply_async(do_sim, ())
-#pool.close()
-#
-#pool.join()
-#
-#st2 = time()
-#print(st2-st1)
-#
-#"""
 
 
 do_sim() #to run it one 
