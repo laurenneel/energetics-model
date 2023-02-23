@@ -74,8 +74,8 @@ def char2int(y):
 			i = i + 1
 		return y
 
-path_txt_input_folder='/Users/laurenneel/Desktop/Grass_RGB_DSM_Oct22/TC1/'
-finput = open(path_txt_input_folder + "TC1_elev_1m", "r")
+path_txt_input_folder='/Users/laurenneel/Desktop/Grass_RGB_DSM_Oct22/TC2/'
+finput = open(path_txt_input_folder + "TC2_elev_1m", "r")
 ELEV = []
 ELEV = read_it()
 HEADER1 = ELEV[:8]          #creates raster header
@@ -84,7 +84,7 @@ ELEV=char2int(ELEV)
 elev = np.array(ELEV, dtype=float)
 del ELEV
 
-finput = open(path_txt_input_folder + "TC1_slope_1m", "r")
+finput = open(path_txt_input_folder + "TC2_slope_1m", "r")
 SLOPE = []
 SLOPE= read_it()
 HEADER2 = SLOPE[:8]          #creates raster header
@@ -93,7 +93,7 @@ SLOPE = char2int(SLOPE)
 slope = np.array(SLOPE, dtype=float)
 del SLOPE
 
-finput = open(path_txt_input_folder + "TC1_VARI_1m", "r")
+finput = open(path_txt_input_folder + "TC2_VARI_1m", "r")
 VEG = []
 VEG= read_it()
 HEADER4 = VEG[:8]          #creates raster header
@@ -102,7 +102,7 @@ VEG = char2int(VEG)
 veget = np.array(VEG, dtype=float)
 del VEG
 
-finput = open(path_txt_input_folder + "TC1_aspect_1m", "r")
+finput = open(path_txt_input_folder + "TC2_aspect_1m", "r")
 ASPECT = []
 ASPECT= read_it()
 HEADER4 = ASPECT[:8]          #creates raster header
@@ -113,12 +113,56 @@ del ASPECT
 
 
 #### need to remove all -9999 values. Then print the length of the new shape. Take the square root of that number and round down to get the number of rows and columns to use
-#### modifying the shape of input drone files
+#### TC1 - modifying the shape of input drone files
+#elev = elev[elev != -9999]
+#shape = elev.shape[0]
+#
+#if shape > (144 * 144):
+#  shape = (144, 144)
+#  elev = np.reshape(elev[:shape[0]*shape[1]], shape)
+#else:
+#  elev = np.reshape(elev, (int(np.sqrt(shape)), int(np.sqrt(shape))))
+# 
+#### aspect  
+#aspect = aspect[aspect != -9999]
+#shape1 = aspect.shape[0]
+#
+#if shape1 > (144 * 144):
+#  shape1 = (144, 144)
+#  aspect = np.reshape(aspect[:shape1[0]*shape1[1]], shape1)
+#else:
+#  aspect = np.reshape(aspect, (int(np.sqrt(shape1)), int(np.sqrt(shape1))))
+#
+##### slope  
+#slope = slope[slope != -9999]
+#shape2 = slope.shape[0]
+#
+#if shape2 > (144 * 144):
+#  shape2 = (144, 144)
+#  slope = np.reshape(slope[:shape2[0]*shape2[1]], shape2)
+#else:
+#  slope = np.reshape(slope, (int(np.sqrt(shape2)), int(np.sqrt(shape2))))
+#  
+#  
+#  #### veget  
+#veget = veget[veget != -9999]
+#shape3 = veget.shape[0]
+#
+#if shape3 > (144 * 144):
+#  shape3 = (144, 144)
+#  veget = np.reshape(veget[:shape3[0]*shape3[1]], shape3)
+#else:
+#  veget = np.reshape(veget, (int(np.sqrt(shape3)), int(np.sqrt(shape3))))
+#  
+  
+  
+## TC2 input data
 elev = elev[elev != -9999]
 shape = elev.shape[0]
+print(shape)
 
-if shape > (144 * 144):
-  shape = (144, 144)
+if shape > (200 * 200):
+  shape = (200, 200)
   elev = np.reshape(elev[:shape[0]*shape[1]], shape)
 else:
   elev = np.reshape(elev, (int(np.sqrt(shape)), int(np.sqrt(shape))))
@@ -127,8 +171,8 @@ else:
 aspect = aspect[aspect != -9999]
 shape1 = aspect.shape[0]
 
-if shape1 > (144 * 144):
-  shape1 = (144, 144)
+if shape1 > (200 * 200):
+  shape1 = (200, 200)
   aspect = np.reshape(aspect[:shape1[0]*shape1[1]], shape1)
 else:
   aspect = np.reshape(aspect, (int(np.sqrt(shape1)), int(np.sqrt(shape1))))
@@ -137,8 +181,8 @@ else:
 slope = slope[slope != -9999]
 shape2 = slope.shape[0]
 
-if shape2 > (144 * 144):
-  shape2 = (144, 144)
+if shape2 > (200 * 200):
+  shape2 = (200, 200)
   slope = np.reshape(slope[:shape2[0]*shape2[1]], shape2)
 else:
   slope = np.reshape(slope, (int(np.sqrt(shape2)), int(np.sqrt(shape2))))
@@ -148,19 +192,18 @@ else:
 veget = veget[veget != -9999]
 shape3 = veget.shape[0]
 
-if shape3 > (144 * 144):
-  shape3 = (144, 144)
+if shape3 > (200 * 200):
+  shape3 = (200, 200)
   veget = np.reshape(veget[:shape3[0]*shape3[1]], shape3)
 else:
   veget = np.reshape(veget, (int(np.sqrt(shape3)), int(np.sqrt(shape3))))
   
   
-  
 
 
   
   
-#### BRING in MICROCLIMATE DATA
+##### BRING in MICROCLIMATE DATA
 micro_df = pd.read_csv("/Users/laurenneel/Desktop/Grass_RGB_DSM_Oct22/microclim_input_era5/hourly_df_TC_2021.csv")
 micro_df['datetime']= pd.to_datetime(micro_df['datetime'])
 
@@ -341,7 +384,7 @@ def do_sim():
 			self.TA= 0.
 		
 			self.x_min, self.y_min = 0., 0.
-			self.x_max, self.y_max = 144., 144. #x_max = ncols, y_max = nrows #### CHANGED FROM SEARS 99. for each 8feb!
+			self.x_max, self.y_max = 200., 200. #x_max = ncols, y_max = nrows #### CHANGED FROM SEARS 99. for each 8feb!
 			self.position = {'x':rand() * self.x_max, 'y': rand() * self.y_max}
 		
 			self.thigh =  39. #sears had 35.#Upper voluntary max
@@ -358,6 +401,8 @@ def do_sim():
 			self.decisions = 6
 			self.tb = 20.
 			self.te = 20.
+			#self.te_min_list =[] #LN added
+			#self.te_max_list =[] #LN added
 			self.orientation = vonmises(self.mu, self.kappa)
 			self.dist = 0.
 			self.ctmax = 40.

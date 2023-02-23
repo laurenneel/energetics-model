@@ -380,6 +380,11 @@ def do_sim():
 			self.decisions = 6
 			self.tb = 20.
 			self.te = 20.
+			self.te_min= 20. #LN added
+			self.te_max = 20.
+			self.tb_range_min = 20. #LN added
+			self.tb_range_max = 20. #LN added
+			#self.te_max_list = [] #LN added
 			self.orientation = vonmises(self.mu, self.kappa)
 			self.dist = 0.
 			self.ctmax = 40.
@@ -600,9 +605,12 @@ def do_sim():
 			operative_temp = self.t_ground(sun, Tg_shade, Tg_sun) + (self.R_abs(t, J, sun, a_s, alpha_s, Ta_2m, Tg_shade, Tg_sun) - self.Q_rad(Ta_shade, Ta_sun, sun)) / (29.3 * (self.g_Ha(wind) + self.g_r(sun, Ta_shade, Ta_sun)))
 
 			return operative_temp
-
-			return self.t_ground(sun, Tg_shade, Tg_sun) + (self.R_abs(t, J, sun, a_s, alpha_s, Ta_2m, Tg_shade, Tg_sun) - self.Q_rad(Ta_shade, Ta_sun, sun)) / (29.3 * (self.g_Ha(wind) + self.g_r(sun, Ta_shade, Ta_sun)))
+			#return self.t_ground(sun, Tg_shade, Tg_sun) + (self.R_abs(t, J, sun, a_s, alpha_s, Ta_2m, Tg_shade, Tg_sun) - self.Q_rad(Ta_shade, Ta_sun, sun)) / (29.3 * (self.g_Ha(wind) + self.g_r(sun, Ta_shade, Ta_sun)))
 		
+		def get_min_te(self, t, J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun, a_s, alpha_s,veg):
+			minimum_te = min(self.t_e(t, J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun, a_s, alpha_s,veg))
+			return minimum_te
+
 		def mass(self):
 			return ((self.h * 100.) * pi * (0.5 * self.d * 100.)**2.) / 1000.
 
@@ -655,16 +663,19 @@ def do_sim():
 		def move_reg(self, t, J, elev, slope, aspect, veget):
 			incre, x1, y1 = 0., self.position['x'], self.position['y'] #, 0.
 			#self.active = 1
+			#te_list=[]
 			lenx = len(elev[0])
 			leny = len(elev)
 			az=radians(self.azimuth(t, J))
 			al=radians(self.altitude(t, J))
+			tb_range=[]
 			#self.te = self.t_e(t,J, sun=horizon_master(az, elev[int(self.position['y'])][int(self.position['x'])], x=self.position['x'], y=self.position['y']), a_s=90.- slope[int(self.position['y'])][int(self.position['x'])], alpha_s=aspect[int(self.position['y'])][int(self.position['x'])], veg=veg) # at the moment this is just a holder from ast code
 			diff_tb = 50.
 			temp_c = 32.
 			while elev[int(y1)][int(x1)] == -9999 or slope[int(y1)][int(x1)] == -9999 or aspect[int(y1)][int(x1)] == -9999 or veget[int(y1)][int(x1)] == -9999:
 				a, b, c, incre = self.getDisp()
 				if self.thigh >= self.tb >= self.tlow:
+					tb_range.append(self.tb)
 					if binomial(1, self.p1): # remain still
 						#self.active = 0 # x, y = x, y ... 
 						self.moved = 0.
@@ -679,7 +690,9 @@ def do_sim():
 							az=radians(self.azimuth(t, J))
 							al=radians(self.altitude(t, J))
 							self.te = self.t_e(t,J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)])
+							#te_list.append(self.te)
 							up_tb =  self.update_tb()
+							tb_range.append(up_tb)
 							diff_tb_new = abs(self.t_target - up_tb)
 							if diff_tb_new <= diff_tb: # and c <= temp_c:
 								diff_tb = diff_tb_new
@@ -695,6 +708,7 @@ def do_sim():
 							
 				elif self.tb > self.thigh:
 					if self.tb > self.thigh > self.t_e(t,J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)]):
+						tb_range.append(self.tb) #te_list.append(self.t_e(t,J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)]))
 						if binomial(1, self.p2):
 							self.active = 0 #remain still
 							self.moved = 0.
@@ -709,7 +723,9 @@ def do_sim():
 								az=radians(self.azimuth(t, J))
 								al=radians(self.altitude(t, J))
 								self.te = self.t_e(t,J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)])
+								#te_list.append(self.te)
 								up_tb =  self.update_tb()
+								tb_range.append(up_tb)
 								diff_tb_new = abs(self.t_target - up_tb)
 								if diff_tb_new <= diff_tb: # and c <= temp_c:
 									diff_tb = diff_tb_new
@@ -733,7 +749,9 @@ def do_sim():
 							az=radians(self.azimuth(t, J))
 							al=radians(self.altitude(t, J))
 							self.te = self.t_e(t,J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)])
+							#te_list.append(self.te)
 							up_tb =  self.update_tb()
+							tb_range.append(up_tb)
 							diff_tb_new = abs(self.t_target - up_tb)
 							if diff_tb_new <= diff_tb:# and c <= temp_c:
 								diff_tb = diff_tb_new
@@ -749,6 +767,7 @@ def do_sim():
 	#
 				else: #self.tb < self.tlow:
 					if self.tb < self.tlow < self.t_e(t,J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[y1][x1], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)]):
+						tb_range.append(self.tb) #te_list.append(self.t_e(t,J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[y1][x1], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)]))
 						if binomial(1, self.p3):
 							self.active = 0 #remain still
 							self.moved = 0.
@@ -763,7 +782,9 @@ def do_sim():
 								az=radians(self.azimuth(t, J))
 								al=radians(self.altitude(t, J))
 								self.te = self.t_e(t,J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)])
+								#te_list.append(self.te)
 								up_tb =  self.update_tb()	
+								tb_range.append(up_tb)
 								diff_tb_new = abs(self.t_target - up_tb)
 								if diff_tb_new <= diff_tb: # and c <= temp_c:
 									diff_tb = diff_tb_new
@@ -787,7 +808,9 @@ def do_sim():
 							az=radians(self.azimuth(t, J))
 							al=radians(self.altitude(t, J))
 							self.te = self.t_e(t,J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun=horizon_master(az, elev[int(y1)][int(x1)], x=x1, y=y1), a_s=90.- slope[int(y1)][int(x1)], alpha_s=aspect[int(y1)][int(x1)], veg=veget[int(y1)][int(x1)])
+							#te_list.append(self.te)
 							up_tb =  self.update_tb()
+							tb_range.append(up_tb)
 							diff_tb_new = abs(self.t_target - up_tb)
 							if diff_tb_new <= diff_tb: # and c <= temp_c:
 								diff_tb = diff_tb_new
@@ -799,7 +822,10 @@ def do_sim():
 								self.position['x'], self.position['y'], c = temp_x1, temp_y1, temp_c
 								self.dist += temp_c
 								self.orientation += incre
-								self.moved = c	
+								self.moved = c
+			self.tb_range_min=min(tb_range)
+			self.tb_range_max=max(tb_range)
+			tb_range=[]
 
 
     ### MAKE MAPS
@@ -959,6 +985,7 @@ def do_sim():
 		lizard.zenith(t,J=J) #J=J
 		print("zenith angle: ", lizard.Z)
 		print("Julian day is: ", J)
+		te_list=[]
 		if lizard.Z > 0.:
 			Ta_sun = micro_df_minute_res.loc[index, "Ta_sun"]
 			Ta_shade = micro_df_minute_res.loc[index, "Ta_shade"]
@@ -968,10 +995,12 @@ def do_sim():
 			print("Before floor y:", lizard.position['y'])
 			print("Before floor x:", lizard.position['x'])
 			lizard.te = lizard.t_e(t,J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun=horizon_master(radians(lizard.azimuth(t, J)), elev[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], x=lizard.position['x'], y=lizard.position['y']), a_s=90.- slope[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], alpha_s=aspect[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], veg=veget[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])])
+			te_list.append(lizard.te)
 			print("Lizard operative temp: ", lizard.te)
 			print(lizard.zenith(t,J))
 			if lizard.tb < lizard.te < lizard.tlow:
 				print("case 1: lizard is not active and has not moved")
+				te_list.append(lizard.tb)
 				lizard.moved = 0.
 				lizard.active = 0.
 				lizard.tb = lizard.update_tb()
@@ -979,8 +1008,10 @@ def do_sim():
 				#lizard.tot_dist_moved += lizard.moved
 			elif lizard.tlow <= lizard.tb <=lizard.ctmax:
 				print("case 2: lizard is active and moves")
+				te_list.append(lizard.tb)
 				lizard.move_reg(t,J,elev, slope, aspect, veget)
 				lizard.tb = lizard.update_tb()
+				te_list.append(lizard.tb)
 				lizard.energy_balance += lizard.smr()
 				lizard.tot_dist_moved += lizard.moved
 				lizard.ate += binomial(1, 0.05)
@@ -989,6 +1020,7 @@ def do_sim():
 			else:
 				if lizard.te > lizard.ctmax:
 					print("case 3: lizard is not active and has not moved")
+					te_list.append(lizard.te)
 					lizard.moved = 0.
 					lizard.active = 0.
 					lizard.energy_balance += lizard.smr()
@@ -997,10 +1029,15 @@ def do_sim():
 					print("case 4: lizard is not active and not moving")
 					lizard.active = 0.
 					lizard.tb = lizard.update_tb()
+					te_list.append(lizard.tb)
 					lizard.energy_balance += lizard.smr()
+		lizard.te_min=min(te_list)
+		lizard.te_max=max(te_list)
+		te_list=[]
+
      
 	with open('output.csv', mode='w', newline='') as output_file: ## ALL DATA
-		fieldnames = ['time', 'J', 'x', 'y', 'te', 'tb', 'total_activity', 'mei', 'net', 'moved', 'smr', 'energy_balance']
+		fieldnames = ['time', 'J', 'x', 'y', 'te', 'te_min', 'te_max', 'tb_range_min', 'tb_range_max','tb', 'total_activity', 'mei', 'net', 'moved', 'smr', 'energy_balance']
 		output_writer = csv.DictWriter(output_file, fieldnames=fieldnames)
 		output_writer.writeheader()
 		for index, row in micro_df_minute_res.iterrows(): 
@@ -1009,12 +1046,20 @@ def do_sim():
 			if t >= 6 and t < 20:
 				for lizard in population:
 					sim_act(lizard, t, J)
+					#te_min_list = [lizard.te_min_list[i] for i in range(len(micro_df_minute_res))]
+					#te_max_list = [[lizard.te_max_list[i][j] for lizard in population] for i in range(len(micro_df_minute_res)) for j in range(len(population))]		
+					#te_min = [min([te_min_list[i*len(population)+j][k] for j in range(len(population))]) for i in range(len(micro_df_minute_res)) for k in range(len(population))]
+					#te_max = [max([te_max_list[i*len(population)+j][k] for j in range(len(population))]) for i in range(len(micro_df_minute_res)) for k in range(len(population))]
 					output_writer.writerow({
                     'time': t,
                     'J': J,
                     'x': lizard.position['x'],
                     'y': lizard.position['y'],
                     'te': lizard.te,
+					'te_min': lizard.te_min,
+                    'te_max': lizard.te_max,
+                    'tb_range_min': lizard.tb_range_min,
+                    'tb_range_max': lizard.tb_range_max,
                     'tb': lizard.tb,
                     'total_activity': lizard.total_activity,
                     'mei': lizard.mei(),
@@ -1023,7 +1068,7 @@ def do_sim():
                     'smr': lizard.smr(),
                     'energy_balance': lizard.energy_balance
                 })
-     
+      
      
 	with open('overall_averages.csv', mode='w', newline='') as output_file: 
 		fieldnames = ['te', 'tb', 'total_activity', 'mei', 'net', 'moved', 'smr', 'energy_balance']

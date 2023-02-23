@@ -360,6 +360,8 @@ def do_sim():
 			self.decisions = 6
 			self.tb = 20.
 			self.te = 20.
+			self.te_min_list =[] #LN added
+			self.te_max_list =[] #LN added
 			self.orientation = vonmises(self.mu, self.kappa)
 			self.dist = 0.
 			self.ctmax = 40.
@@ -978,9 +980,13 @@ def do_sim():
 					lizard.active = 0.
 					lizard.tb = lizard.update_tb()
 					lizard.energy_balance += lizard.smr()
+		lizard.te_min_list.append(lizard.te)
+		lizard.te_max_list.append(lizard.te)
+		lizard.te_min = min(lizard.te_min_list)
+		lizard.te_max = max(lizard.te_max_list)
      
 	with open('RP_output.csv', mode='w', newline='') as output_file: ## ALL DATA
-		fieldnames = ['time', 'J', 'x', 'y', 'te', 'tb', 'total_activity', 'mei', 'net', 'moved', 'smr', 'energy_balance']
+		fieldnames = ['time', 'J', 'x', 'y', 'te', 'te_min', 'te_max', 'tb', 'total_activity', 'mei', 'net', 'moved', 'smr', 'energy_balance']
 		output_writer = csv.DictWriter(output_file, fieldnames=fieldnames)
 		output_writer.writeheader()
 		for index, row in micro_df_minute_res.iterrows(): 
@@ -995,6 +1001,8 @@ def do_sim():
                     'x': lizard.position['x'],
                     'y': lizard.position['y'],
                     'te': lizard.te,
+					'te_min': min(lizard.te_min_list),
+                    'te_max': max(lizard.te_max_list),
                     'tb': lizard.tb,
                     'total_activity': lizard.total_activity,
                     'mei': lizard.mei(),
