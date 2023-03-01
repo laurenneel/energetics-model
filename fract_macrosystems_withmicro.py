@@ -418,11 +418,7 @@ def do_sim():
 		#	return
 
 		def zenith(self ,t, J):	# phi = lattitde, delta = solar declination, t0 = solar noon
-			#self.Z = degrees(acos(sin(radians(self.phi)) * sin(radians(self.declination(J))) + cos(radians(self.phi)) * cos(radians(self.declination(J))) * cos(radians(15. * (t - self.noon(J)))))) ## original code
-			#self.Z = degrees(cos(acos(sin(radians(self.phi)) * sin(radians(self.declination(J))) + cos(radians(self.phi)) * cos(radians(self.declination(J))) * cos(radians(15. * (t - self.noon(J))))))) #LN 28feb
-			#self.Z = degrees((acos(sin(radians(self.phi)) * sin(radians(self.declination(J))) + cos(radians(self.phi)) * cos(radians(self.declination(J))) * cos(radians(15. * (t - self.noon(J))))))) 
 			self.Z =  degrees(acos(sin(radians(self.phi)) * sin(radians(self.declination(J))) + cos(radians(self.phi)) * cos(radians(self.declination(J))) * cos(radians(15. * (t - self.noon(J))))))
-
 			if self.Z <=0.: #or self.Z is None:  ##LN modified 
 				self.Z = 0.
 			if self.Z >90.: #or self.Z is None:  ##LN modified 
