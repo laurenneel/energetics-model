@@ -569,20 +569,50 @@ def do_sim():
 		
 		def t_e(self, t, J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun, a_s, alpha_s,veg): #UPDATE FOR MICROCLIM INPUT DATA .... t_ground should be replaced with Ta at 2cm... need to set it up for different sun/shade 2cm input
 			#_wind = 0. #note, this is to mimic convection shadow effect
-			if sun ==0 and veg == 0: #was or not and
-				sun = 0
-			else:
-				sun = 0.05 #0.375
-			if veg == 1:
-				wind = 0.1 #0.1
-			else:
-				wind = 2.0
+			#if sun ==0 and veg == 0: #was or not and
+			#	sun = 0
+			#else:
+			#	sun = 0.05 #0.375
+			#if veg == 1:
+			#	wind = 0.1 #0.1
+			#else:
+			#	wind = 2.0
+			self.zenith(t,J)
+			if 0.<self.Z<=90.:
+				if sun ==1 and veg < 0.5: #was or not and
+					sun = 1
+				else:
+					sun = 0.375
+				if veg > 0.5:
+					wind = 0.1
+				else:
+					wind = 2.0
+			if self.Z < 0.:
+				sun ==0
+    
 			operative_temp = self.t_ground(sun, Tg_shade, Tg_sun) + (self.R_abs(t, J, sun, a_s, alpha_s, Ta_2m, Tg_shade, Tg_sun) - self.Q_rad(Ta_shade, Ta_sun, sun)) / (29.3 * (self.g_Ha(wind) + self.g_r(sun, Ta_shade, Ta_sun)))
 
 			return operative_temp
 
 			return self.t_ground(sun, Tg_shade, Tg_sun) + (self.R_abs(t, J, sun, a_s, alpha_s, Ta_2m, Tg_shade, Tg_sun) - self.Q_rad(Ta_shade, Ta_sun, sun)) / (29.3 * (self.g_Ha(wind) + self.g_r(sun, Ta_shade, Ta_sun)))
-		
+
+		def get_min_te(self, t, J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun, wind, a_s, alpha_s):
+			sun=0
+			#veg=0
+			wind=0.0
+			#min_te = Ta_shade + ((self.radiation_abs(julian, hour, s, A_S, tau, Ta, Tg, A_L) - self.E_S*STEFAN_BOLTZMANN*Ta**4) / (cp*(self.gr(Ta, cp)+self.gha(u))))
+			min_te = self.t_ground(sun, Tg_shade, Tg_sun) + (self.R_abs(t, J, sun, a_s, alpha_s, Ta_2m, Tg_shade, Tg_sun) - self.Q_rad(Ta_shade, Ta_sun, sun)) / (29.3 * (self.g_Ha(wind) + self.g_r(sun, Ta_shade, Ta_sun)))
+   #Ta + ((self.radiation_abs(julian, hour, s, A_S, tau, Ta, Tg, A_L) - self.E_S*STEFAN_BOLTZMANN*Ta**4) / (cp*(self.gr(Ta, cp)+self.gha(u))))
+			return min_te
+
+		def get_max_te(self, t, J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun, wind, a_s, alpha_s):
+			self.zenith(t,J)
+			if 0.<self.Z<=90.:
+				sun==1 and wind == 0.0
+			else:
+				sun==0 and wind ==0.0
+			max_te = self.t_ground(sun, Tg_shade, Tg_sun) + (self.R_abs(t, J, sun, a_s, alpha_s, Ta_2m, Tg_shade, Tg_sun) - self.Q_rad(Ta_shade, Ta_sun, sun)) / (29.3 * (self.g_Ha(wind) + self.g_r(sun, Ta_shade, Ta_sun)))
+			return max_te
 		def mass(self):
 			return ((self.h * 100.) * pi * (0.5 * self.d * 100.)**2.) / 1000.
 
@@ -950,6 +980,10 @@ def do_sim():
 			lizard.te = lizard.t_e(t,J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun=horizon_master(radians(lizard.azimuth(t, J)), elev[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], x=lizard.position['x'], y=lizard.position['y']), a_s=90.- slope[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], alpha_s=aspect[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], veg=veget[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])])
 			print("Lizard operative temp: ", lizard.te)
 			print(lizard.zenith(t,J))
+			lizard.te_min = lizard.get_min_te(t,J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun=0.0, wind=2.0, a_s=90.- slope[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], alpha_s=aspect[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])])
+			print("min Te is:", lizard.te_min)
+			lizard.te_max = lizard.get_max_te(t,J, Tg_shade, Tg_sun, Ta_2m, Ta_shade, Ta_sun, sun=1.0, wind = 0.0, a_s=90.- slope[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], alpha_s=aspect[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])])
+			print("max Te is:", lizard.te_max)
 			if lizard.tb < lizard.te < lizard.tlow:
 				print("case 1: lizard is not active and has not moved")
 				lizard.moved = 0.
@@ -980,7 +1014,7 @@ def do_sim():
 					lizard.energy_balance += lizard.smr()
      
 	with open('WC_output.csv', mode='w', newline='') as output_file: ## ALL DATA
-		fieldnames = ['time', 'J', 'x', 'y', 'te', 'tb', 'total_activity', 'mei', 'net', 'moved', 'smr', 'energy_balance']
+		fieldnames = ['time', 'J', 'x', 'y', 'sun', 'te', 'min_te', 'max_te','tb', 'total_activity', 'mei', 'net', 'moved', 'smr', 'energy_balance']
 		output_writer = csv.DictWriter(output_file, fieldnames=fieldnames)
 		output_writer.writeheader()
 		for index, row in micro_df_minute_res.iterrows(): 
@@ -994,7 +1028,10 @@ def do_sim():
                     'J': J,
                     'x': lizard.position['x'],
                     'y': lizard.position['y'],
+                    'sun': horizon_master(radians(lizard.azimuth(t, J)), elev[math.floor(lizard.position['y'])][math.floor(lizard.position['x'])], x=lizard.position['x'], y=lizard.position['y']),
                     'te': lizard.te,
+                    'min_te': lizard.te_min,
+                    'max_te': lizard.te_max,
                     'tb': lizard.tb,
                     'total_activity': lizard.total_activity,
                     'mei': lizard.mei(),
